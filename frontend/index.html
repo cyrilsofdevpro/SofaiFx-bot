@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SofAi FX - Trading Signal Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/features.css">
+    <link rel="stylesheet" href="assets/css/mt5-connection.css">
+    <script src="assets/js/auth.js?v=8" defer></script></script>
+    <script src="assets/js/utils.js?v=3" defer></script>
+    <script src="assets/js/mt5-account.js?v=4" defer></script>
+    <script src="assets/js/mt5-connection.js?v=3" defer></script>
+    <script src="assets/js/recommendations.js?v=3" defer></script>
+    <script src="assets/js/settings.js?v=3" defer></script>
+    <script src="assets/js/scheduler.js?v=3" defer></script>
+    <script src="assets/js/api-key-manager.js?v=3" defer></script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-gray-100 min-h-screen">
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-lg p-6 sm:p-8 max-w-md w-full shadow-2xl max-h-screen overflow-y-auto">
+            <h2 class="text-xl sm:text-2xl font-bold text-white mb-2">SofAi FX Dashboard</h2>
+            <p class="text-xs text-blue-300 mb-6 p-2 bg-blue-900 bg-opacity-30 rounded border border-blue-700">
+                💡 <strong>Multi-Tab Support:</strong> Each tab maintains its own independent session. Login with different accounts in different tabs!
+            </p>
+            
+            <!-- Tab Navigation -->
+            <div class="flex gap-2 sm:gap-4 mb-6 border-b border-slate-700">
+                <button id="login-tab" class="px-3 sm:px-4 py-2 text-sm sm:text-base border-b-2 border-green-500 text-white font-semibold cursor-pointer hover:text-green-400 transition">
+                    <i class="fas fa-sign-in-alt mr-1 sm:mr-2"></i><span class="hidden sm:inline">Login</span><span class="sm:hidden">In</span>
+                </button>
+                <button id="register-tab" class="px-3 sm:px-4 py-2 text-sm sm:text-base text-gray-400 hover:text-white font-semibold cursor-pointer transition">
+                    <i class="fas fa-user-plus mr-1 sm:mr-2"></i><span class="hidden sm:inline">Register</span><span class="sm:hidden">Reg</span>
+                </button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                    <input type="email" id="login-email" class="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-green-500 focus:outline-none transition" placeholder="your@email.com" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                    <input type="password" id="login-password" class="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-green-500 focus:outline-none transition" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="w-full px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+            </form>
+            
+            <!-- Register Form (Hidden by default) -->
+            <form id="register-form" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+                    <input type="text" id="register-name" class="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-green-500 focus:outline-none transition" placeholder="John Doe" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                    <input type="email" id="register-email" class="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-green-500 focus:outline-none transition" placeholder="your@email.com" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                    <input type="password" id="register-password" class="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-green-500 focus:outline-none transition" placeholder="At least 6 characters" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Confirm Password</label>
+                    <input type="password" id="register-confirm" class="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-green-500 focus:outline-none transition" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="w-full px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition">
+                    <i class="fas fa-user-plus mr-2"></i>Create Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-slate-950 shadow-2xl sticky top-0 z-50 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-chart-line text-white text-sm sm:text-base"></i>
+                    </div>
+                    <h1 class="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                        SofAi FX
+                    </h1>
+                </div>
+                <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="md:hidden px-2 py-2 text-gray-300 hover:text-white">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div id="nav-menu" class="hidden md:flex items-center gap-1 sm:gap-3 flex-wrap justify-end">
+                    <span id="server-status" class="flex items-center gap-1 text-xs sm:text-sm">
+                        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                        <span class="hidden sm:inline">Offline</span>
+                    </span>
+                    <span id="user-info" class="text-xs sm:text-sm text-gray-300 hidden" title="Session active in this tab only">
+                        <span id="user-name"></span>
+                        <span id="token-usage" class="ml-2 px-2 py-0.5 bg-slate-700 rounded text-xs"></span>
+                    </span>
+                    <button onclick="location.reload()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-slate-700 hover:bg-slate-600 rounded transition" title="Refresh">
+                        <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Refresh</span>
+                    </button>
+                    <button id="admin-btn" onclick="goToAdmin()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-purple-600 hover:bg-purple-700 rounded transition hidden" title="Admin Dashboard">
+                        <i class="fas fa-crown"></i> <span class="hidden sm:inline">Admin</span>
+                    </button>
+                    <button onclick="AuthSystem.switchAccount()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-yellow-600 hover:bg-yellow-500 rounded transition" title="Switch account">
+                        <i class="fas fa-user-switch"></i> <span class="hidden sm:inline">Switch</span>
+                    </button>
+                    <button onclick="AuthSystem.logout()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-red-600 hover:bg-red-500 rounded transition" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Logout</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile Menu (hidden by default) -->
+            <div id="mobile-menu-expanded" class="hidden md:hidden mt-3 pt-3 border-t border-slate-700 flex flex-col gap-2">
+                <span id="user-info-mobile" class="text-xs text-gray-300 hidden px-2 py-1">
+                    <i class="fas fa-user"></i> <span id="user-name-mobile"></span>
+                    <span id="token-usage-mobile" class="ml-1 px-1 bg-slate-700 rounded text-xs"></span>
+                </span>
+                <button onclick="location.reload()" class="w-full px-3 py-2 text-left text-sm bg-slate-700 hover:bg-slate-600 rounded transition">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+                <button id="admin-btn-mobile" onclick="goToAdmin()" class="w-full px-3 py-2 text-left text-sm bg-purple-600 hover:bg-purple-700 rounded transition hidden">
+                    <i class="fas fa-crown mr-2"></i>Admin
+                </button>
+                <button onclick="AuthSystem.switchAccount()" class="w-full px-3 py-2 text-left text-sm bg-yellow-600 hover:bg-yellow-500 rounded transition">
+                    <i class="fas fa-user-switch mr-2"></i>Switch Account
+                </button>
+                <button onclick="AuthSystem.logout()" class="w-full px-3 py-2 text-left text-sm bg-red-600 hover:bg-red-500 rounded transition">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 sm:p-6 hover:border-green-500 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs sm:text-sm">Total Signals</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-white" id="total-signals">0</p>
+                    </div>
+                    <i class="fas fa-chart-pie text-green-400 text-2xl sm:text-3xl opacity-30"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 sm:p-6 hover:border-blue-500 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs sm:text-sm">Buy Signals</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-green-400" id="buy-signals">0</p>
+                    </div>
+                    <i class="fas fa-arrow-up text-green-500 text-2xl sm:text-3xl opacity-30"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 sm:p-6 hover:border-red-500 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs sm:text-sm">Sell Signals</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-red-400" id="sell-signals">0</p>
+                    </div>
+                    <i class="fas fa-arrow-down text-red-500 text-2xl sm:text-3xl opacity-30"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 sm:p-6 hover:border-yellow-500 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs sm:text-sm">Avg Confidence</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-yellow-400" id="avg-confidence">0%</p>
+                    </div>
+                    <i class="fas fa-lightbulb text-yellow-500 text-2xl sm:text-3xl opacity-30"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Section -->
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+            <h2 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+                <i class="fas fa-search text-blue-400"></i> <span class="hidden sm:inline">Quick</span> Analysis
+            </h2>
+            <div class="flex flex-col gap-2 sm:gap-4">
+                <input 
+                    type="text" 
+                    id="symbol-input" 
+                    placeholder="Enter symbol (e.g., EURUSD)" 
+                    class="w-full px-3 sm:px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                >
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+                    <button 
+                        onclick="analyzeSymbol()" 
+                        class="px-3 sm:px-6 py-2 text-xs sm:text-sm bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold rounded-lg hover:shadow-lg transition"
+                    >
+                        <i class="fas fa-play"></i> <span class="hidden sm:inline">Analyze</span>
+                    </button>
+                    <button 
+                        onclick="analyzeAll()" 
+                        class="px-3 sm:px-6 py-2 text-xs sm:text-sm bg-gradient-to-r from-purple-400 to-pink-500 text-white font-semibold rounded-lg hover:shadow-lg transition"
+                    >
+                        <i class="fas fa-bolt"></i> <span class="hidden sm:inline">All</span>
+                    </button>
+                    <button 
+                        onclick="clearSignals()" 
+                        class="col-span-2 sm:col-span-2 px-3 sm:px-6 py-2 text-xs sm:text-sm bg-gradient-to-r from-red-500 to-orange-500 text-white font-semibold rounded-lg hover:shadow-lg transition"
+                    >
+                        <i class="fas fa-trash"></i> <span class="hidden sm:inline">Clear</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Charts Section -->
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-line text-green-400"></i> Live Forex Charts
+            </h2>
+            
+            <!-- Pair Tabs -->
+            <div class="flex flex-wrap gap-2 mb-4 pb-4 border-b border-slate-700">
+                <button class="pair-tab active-tab px-4 py-2 rounded-lg text-sm font-semibold transition" data-pair="EURUSD" onclick="changePair('EURUSD')">
+                    <i class="fas fa-chart-line"></i> EUR/USD
+                </button>
+                <button class="pair-tab px-4 py-2 rounded-lg text-sm font-semibold transition" data-pair="GBPUSD" onclick="changePair('GBPUSD')">
+                    <i class="fas fa-chart-line"></i> GBP/USD
+                </button>
+                <button class="pair-tab px-4 py-2 rounded-lg text-sm font-semibold transition" data-pair="USDJPY" onclick="changePair('USDJPY')">
+                    <i class="fas fa-chart-line"></i> USD/JPY
+                </button>
+                <button class="pair-tab px-4 py-2 rounded-lg text-sm font-semibold transition" data-pair="AUDUSD" onclick="changePair('AUDUSD')">
+                    <i class="fas fa-chart-line"></i> AUD/USD
+                </button>
+                <button class="pair-tab px-4 py-2 rounded-lg text-sm font-semibold transition" data-pair="USDCAD" onclick="changePair('USDCAD')">
+                    <i class="fas fa-chart-line"></i> USD/CAD
+                </button>
+                
+                <div class="flex-1"></div>
+                
+                <!-- Timeframe Selector -->
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-400 text-sm">Timeframe:</span>
+                    <select id="timeframe-select" class="px-3 py-1 bg-slate-700 border border-slate-600 rounded text-sm text-white focus:outline-none focus:border-blue-500" onchange="changeTimeframe(this.value)">
+                        <option value="1">1min</option>
+                        <option value="5">5min</option>
+                        <option value="15">15min</option>
+                        <option value="60" selected>1hour</option>
+                        <option value="240">4hour</option>
+                        <option value="1440">1day</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Chart Container -->
+            <div id="trading-chart" style="height: 400px; width: 100%;" class="rounded-lg overflow-hidden bg-slate-900"></div>
+            
+            <!-- Chart Info -->
+            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div class="bg-slate-700 rounded p-3">
+                    <p class="text-gray-400">Current Price</p>
+                    <p class="text-xl font-bold text-blue-400" id="chart-current-price">--</p>
+                </div>
+                <div class="bg-slate-700 rounded p-3">
+                    <p class="text-gray-400">24h Change</p>
+                    <p class="text-xl font-bold text-green-400" id="chart-change">--</p>
+                </div>
+                <div class="bg-slate-700 rounded p-3">
+                    <p class="text-gray-400">High</p>
+                    <p class="text-xl font-bold text-yellow-400" id="chart-high">--</p>
+                </div>
+                <div class="bg-slate-700 rounded p-3">
+                    <p class="text-gray-400">Low</p>
+                    <p class="text-xl font-bold text-orange-400" id="chart-low">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MT5 Connection Section -->
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-plug text-purple-400"></i> MT5 Account Connection
+            </h2>
+            
+            <!-- Status Display -->
+            <div id="mt5-connection-status" class="mt5-status disconnected mb-6 p-4 rounded-lg bg-slate-700 flex items-center gap-2">
+                <span class="indicator red"></span>
+                <span>🔴 Not Connected</span>
+            </div>
+            
+            <!-- Notifications -->
+            <div id="mt5-notifications" class="mb-4 space-y-2"></div>
+            
+            <!-- Connection Form -->
+            <form id="mt5-connection-form" class="space-y-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Login ID Input -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            <i class="fas fa-user"></i> MT5 Login ID
+                        </label>
+                        <input 
+                            type="text" 
+                            id="mt5-login-input"
+                            class="mt5-form-input w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                            placeholder="123456"
+                            autocomplete="off"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">Your MT5 account number</p>
+                    </div>
+                    
+                    <!-- Password Input -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            <i class="fas fa-lock"></i> MT5 Password
+                        </label>
+                        <input 
+                            type="password" 
+                            id="mt5-password-input"
+                            class="mt5-form-input w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                            placeholder="••••••••"
+                            autocomplete="off"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">Encrypted and never shared</p>
+                    </div>
+                    
+                    <!-- Server Dropdown -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            <i class="fas fa-server"></i> MT5 Server
+                        </label>
+                        <select 
+                            id="mt5-server-select"
+                            class="mt5-form-input w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                        >
+                            <option value="">Select Server...</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Choose your broker server</p>
+                    </div>
+                </div>
+                
+                <!-- Buttons -->
+                <div class="flex gap-3 pt-4">
+                    <button 
+                        type="submit"
+                        id="mt5-connect-btn"
+                        class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-lg transition flex items-center gap-2"
+                    >
+                        <i class="fas fa-plug"></i> Connect Account
+                    </button>
+                    <button 
+                        type="button"
+                        id="mt5-disconnect-btn"
+                        class="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition flex items-center gap-2 hidden"
+                    >
+                        <i class="fas fa-power-off"></i> Disconnect
+                    </button>
+                </div>
+                
+                <!-- Info -->
+                <div class="mt-4 p-4 bg-blue-900/30 border border-blue-700 rounded-lg">
+                    <p class="text-sm text-blue-300">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Security Notice:</strong> Your credentials are encrypted on the server. 
+                        Never share your password. Your login is never stored in plain text.
+                    </p>
+                </div>
+            </form>
+            
+            <!-- Account Info Display -->
+            <div id="mt5-account-info" class="mt-6"></div>
+        </div>
+
+        <!-- MT5 Account Overview Section -->
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-credit-card text-green-400"></i> MT5 Account Overview
+            </h2>
+            
+            <!-- Connection Status -->
+            <div class="mb-6 p-4 bg-slate-700 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full" id="mt5-status-indicator"></div>
+                        <span id="mt5-status-text" class="font-semibold">Checking connection...</span>
+                    </div>
+                    <button onclick="loadMT5Account()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm transition">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Account Details Grid -->
+            <div id="mt5-account-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- Balance Card -->
+                <div class="bg-slate-700 border border-slate-600 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Balance</p>
+                    <p class="text-2xl font-bold text-green-400" id="mt5-balance">--</p>
+                    <p class="text-xs text-gray-500 mt-1" id="mt5-balance-currency">USD</p>
+                </div>
+                
+                <!-- Equity Card -->
+                <div class="bg-slate-700 border border-slate-600 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Equity</p>
+                    <p class="text-2xl font-bold text-blue-400" id="mt5-equity">--</p>
+                    <p class="text-xs text-gray-500 mt-1" id="mt5-equity-change">P/L: --</p>
+                </div>
+                
+                <!-- Margin Card -->
+                <div class="bg-slate-700 border border-slate-600 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Margin Used / Free</p>
+                    <p class="text-2xl font-bold text-yellow-400" id="mt5-margin">-- / --</p>
+                    <div class="mt-2 bg-slate-800 rounded h-2 overflow-hidden">
+                        <div id="mt5-margin-bar" class="bg-yellow-500 h-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Margin Level Card -->
+                <div class="bg-slate-700 border border-slate-600 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm mb-1">Margin Level</p>
+                    <p class="text-2xl font-bold" id="mt5-margin-level">--</p>
+                    <p class="text-xs text-gray-500 mt-1" id="mt5-margin-level-status">--</p>
+                </div>
+            </div>
+            
+            <!-- Additional Info Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-700 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm">Leverage</p>
+                    <p class="text-xl font-bold" id="mt5-leverage">--</p>
+                </div>
+                
+                <div class="bg-slate-700 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm">Account Type</p>
+                    <p class="text-xl font-bold" id="mt5-account-type">--</p>
+                </div>
+                
+                <div class="bg-slate-700 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm">Account #</p>
+                    <p class="text-xl font-bold font-mono" id="mt5-account-login">--</p>
+                </div>
+                
+                <div class="bg-slate-700 rounded-lg p-4">
+                    <p class="text-gray-400 text-sm">Server</p>
+                    <p class="text-xl font-bold" id="mt5-server">--</p>
+                </div>
+            </div>
+            
+            <!-- Health Status -->
+            <div id="mt5-health-section" class="mt-6 pt-6 border-t border-slate-700">
+                <h3 class="text-sm font-semibold text-gray-300 mb-3">Account Health</h3>
+                <div id="mt5-warnings-container" class="space-y-2">
+                    <div class="text-sm text-gray-400">Loading health status...</div>
+                </div>
+            </div>
+            
+            <!-- Last Updated -->
+            <p class="text-xs text-gray-500 text-right mt-4">
+                Last updated: <span id="mt5-last-update">--</span>
+            </p>
+        </div>
+
+        <!-- Open Positions Section -->
+        <div id="positions-section" class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-line text-green-400"></i> Open Positions
+            </h2>
+            <div id="positions-container">
+                <div class="text-gray-400 text-sm">No open positions</div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-700">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-400 text-sm">Today's P&L</p>
+                        <p class="text-xl font-bold" id="today-pnl">$0.00</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm">Total Trades</p>
+                        <p class="text-xl font-bold" id="total-trades">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Signals -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Signals Feed -->
+            <div class="lg:col-span-2">
+                <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-bell text-yellow-400"></i> Latest Signals
+                    </h2>
+                    <div id="signals-container" class="space-y-3 max-h-96 overflow-y-auto">
+                        <div class="text-center text-gray-400 py-8">
+                            <p>No signals yet. Click "Analyze" to get started.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-cyan-400"></i> Info
+                </h2>
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <p class="text-gray-400">Status</p>
+                        <p class="font-semibold" id="bot-status">Idle</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400">Last Update</p>
+                        <p class="font-semibold" id="last-update">Never</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400">Monitored Pairs</p>
+                        <p class="font-semibold" id="monitored-pairs">Loading...</p>
+                    </div>
+                    <hr class="border-slate-700">
+                    <button 
+                        onclick="loadConfig()" 
+                        class="w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition"
+                    >
+                        <i class="fas fa-cog"></i> Load Config
+                    </button>
+                    <button 
+                        id="trading-bot-btn"
+                        onclick="toggleTradingBot()" 
+                        class="w-full px-3 py-2 mt-2 bg-red-600 hover:bg-red-500 rounded text-sm transition"
+                    >
+                        <i class="fas fa-play"></i> Start Trading Bot
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Signal Table -->
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-table text-purple-400"></i> Signal History
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-700">
+                            <th class="px-4 py-2 text-left text-gray-400">Pair</th>
+                            <th class="px-4 py-2 text-left text-gray-400">Signal</th>
+                            <th class="px-4 py-2 text-left text-gray-400">Price</th>
+                            <th class="px-4 py-2 text-left text-gray-400">Confidence</th>
+                            <th class="px-4 py-2 text-left text-gray-400">AI Conf</th>
+                            <th class="px-4 py-2 text-left text-gray-400">Filter</th>
+                            <th class="px-4 py-2 text-left text-gray-400">Agreement</th>
+                            <th class="px-4 py-2 text-left text-gray-400">Reason</th>
+                            <th class="px-4 py-2 text-left text-gray-400">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="signals-table-body">
+                        <tr>
+                            <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                                No signals yet
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4">Signals Distribution</h2>
+                <canvas id="signalsChart"></canvas>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4">Confidence Levels</h2>
+                <canvas id="confidenceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== NEW FEATURES SECTIONS ===== -->
+
+    <!-- Pair Recommendations Section -->
+    <div id="recommendations-section" class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold flex items-center gap-3">
+                <i class="fas fa-lightbulb text-yellow-400"></i> 
+                <span>Pair Recommendations</span>
+            </h2>
+            <button onclick="recommendationsManager.refresh()" 
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition flex items-center gap-2">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        <p class="text-gray-400 mb-6">Based on your signal history - recommended pairs sorted by signal activity and trend</p>
+        <div id="recommendations-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 min-h-48">
+            <div class="col-span-full text-center py-12 text-gray-400">
+                <i class="fas fa-spinner text-2xl animate-spin"></i>
+                <p class="mt-2">Loading recommendations...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings & Preferences Section -->
+    <div id="settings-section" class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+            <i class="fas fa-cog text-cyan-400"></i> 
+            <span>Settings & Preferences</span>
+        </h2>
+        <div id="settings-panel" class="space-y-6">
+            <div class="text-center py-12 text-gray-400">
+                <i class="fas fa-spinner text-2xl animate-spin"></i>
+                <p class="mt-2">Loading preferences...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-Analysis Scheduler Section -->
+    <div id="scheduler-section" class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+            <i class="fas fa-robot text-purple-400"></i> 
+            <span>Auto-Analysis Scheduler</span>
+        </h2>
+        <div id="scheduler-controls" class="space-y-4">
+            <div class="text-center py-12 text-gray-400">
+                <i class="fas fa-spinner text-2xl animate-spin"></i>
+                <p class="mt-2">Loading scheduler...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Management Section -->
+    <div id="api-key-section" class="mb-8"></div>
+
+    <!-- P&L Dashboard Section -->
+    <div id="pnl-dashboard-section" class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-chart-line mr-2 text-green-500"></i>Performance Dashboard
+        </h2>
+        
+        <!-- P&L Summary Cards -->
+        <div id="pnl-summary-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Total P&L -->
+            <div class="bg-slate-700 rounded-lg p-4">
+                <div class="text-gray-400 text-sm">Total P&L</div>
+                <div id="pnl-total" class="text-2xl font-bold text-white">$0.00</div>
+                <div id="pnl-total-percent" class="text-sm text-gray-400">0.00%</div>
+            </div>
+            <!-- Win Rate -->
+            <div class="bg-slate-700 rounded-lg p-4">
+                <div class="text-gray-400 text-sm">Win Rate</div>
+                <div id="pnl-win-rate" class="text-2xl font-bold text-white">0%</div>
+                <div id="pnl-trades-count" class="text-sm text-gray-400">0 trades</div>
+            </div>
+            <!-- Profit Factor -->
+            <div class="bg-slate-700 rounded-lg p-4">
+                <div class="text-gray-400 text-sm">Profit Factor</div>
+                <div id="pnl-profit-factor" class="text-2xl font-bold text-white">0.00</div>
+                <div id="pnl-avg-win" class="text-sm text-gray-400">Avg Win: $0</div>
+            </div>
+            <!-- Open Positions -->
+            <div class="bg-slate-700 rounded-lg p-4">
+                <div class="text-gray-400 text-sm">Open Positions</div>
+                <div id="pnl-open-positions" class="text-2xl font-bold text-white">0</div>
+                <div id="pnl-winning-trades" class="text-sm text-gray-400">0 winning</div>
+            </div>
+        </div>
+        
+        <!-- Period Filter -->
+        <div class="flex gap-4 mb-4">
+            <select id="pnl-period-select" class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white">
+                <option value="7">Last 7 Days</option>
+                <option value="30" selected>Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="365">Last Year</option>
+                <option value="all">All Time</option>
+            </select>
+            <button onclick="loadPnLDashboard()" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+        </div>
+        
+        <!-- P&L Tabs -->
+        <div class="flex gap-2 mb-4 border-b border-slate-600">
+            <button onclick="showPnLTab('overview')" class="px-4 py-2 text-green-400 border-b-2 border-green-500 font-semibold">
+                <i class="fas fa-chart-pie mr-2"></i>Overview
+            </button>
+            <button onclick="showPnLTab('trades')" class="px-4 py-2 text-gray-400 hover:text-white font-semibold">
+                <i class="fas fa-list mr-2"></i>Recent Trades
+            </button>
+            <button onclick="showPnLTab('symbols')" class="px-4 py-2 text-gray-400 hover:text-white font-semibold">
+                <i class="fas fa-chart-bar mr-2"></i>By Symbol
+            </button>
+            <button onclick="showPnLTab('monthly')" class="px-4 py-2 text-gray-400 hover:text-white font-semibold">
+                <i class="fas fa-calendar mr-2"></i>Monthly
+            </button>
+        </div>
+        
+        <!-- Tab Content: Overview -->
+        <div id="pnl-tab-overview" class="pnl-tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Performance Chart -->
+                <div class="bg-slate-700 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-white mb-3">P&L Over Time</h3>
+                    <canvas id="pnl-chart" height="200"></canvas>
+                </div>
+                <!-- Stats Summary -->
+                <div class="bg-slate-700 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-white mb-3">Statistics</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between"><span class="text-gray-400">Total Trades:</span><span id="stat-total" class="text-white">0</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Winning:</span><span id="stat-winning" class="text-green-400">0</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Losing:</span><span id="stat-losing" class="text-red-400">0</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Avg Win:</span><span id="stat-avg-win" class="text-white">$0</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Avg Loss:</span><span id="stat-avg-loss" class="text-white">$0</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Largest Win:</span><span id="stat-largest-win" class="text-green-400">$0</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Largest Loss:</span><span id="stat-largest-loss" class="text-red-400">$0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Content: Trades -->
+        <div id="pnl-tab-trades" class="pnl-tab-content hidden">
+            <div id="pnl-recent-trades" class="space-y-2 max-h-96 overflow-y-auto">
+                <p class="text-gray-400 text-center py-4">No trades yet</p>
+            </div>
+        </div>
+        
+        <!-- Tab Content: Symbols -->
+        <div id="pnl-tab-symbols" class="pnl-tab-content hidden">
+            <div id="pnl-symbols-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <p class="text-gray-400 text-center py-4 col-span-3">No symbol data available</p>
+            </div>
+        </div>
+        
+        <!-- Tab Content: Monthly -->
+        <div id="pnl-tab-monthly" class="pnl-tab-content hidden">
+            <div id="pnl-monthly-chart" class="bg-slate-700 rounded-lg p-4">
+                <canvas id="monthly-chart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-700 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>🤖 SofAi FX Trading Bot v1.0 | AI-Powered Forex Analysis | Built by Sofdev</p>
+            <p class="mt-2">⚠️ Disclaimer: Trading signals are for educational purposes only. Always do your own research.</p>
+        </div>
+    </footer>
+
+    <!-- Optimization Modules -->
+    <script src="assets/js/data-optimizer.js?v=2" defer></script>
+    <script src="assets/js/chart-optimizer.js?v=2" defer></script>
+    <script src="assets/js/lazy-loader.js?v=2" defer></script>
+    <script src="assets/js/network-monitor.js?v=2" defer></script>
+    
+    <!-- Main Dashboard -->
+    <script src="assets/js/dashboard.js?v=5" defer></script>
+    <script src="assets/js/pnl-dashboard.js?v=2" defer></script>
+    
+    <!-- Mobile Menu Toggle -->
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu-expanded');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+        
+        // Update mobile user info when login happens
+        function updateMobileUserInfo(userName) {
+            const userInfoMobile = document.getElementById('user-info-mobile');
+            const userNameMobile = document.getElementById('user-name-mobile');
+            if (userNameMobile) {
+                userNameMobile.textContent = userName;
+            }
+            if (userInfoMobile && userName) {
+                userInfoMobile.classList.remove('hidden');
+            }
+        }
+        
+        // Update mobile admin button
+        function updateMobileAdminBtn(visible) {
+            const adminBtnMobile = document.getElementById('admin-btn-mobile');
+            if (adminBtnMobile) {
+                if (visible) {
+                    adminBtnMobile.classList.remove('hidden');
+                } else {
+                    adminBtnMobile.classList.add('hidden');
+                }
+            }
+        }
+        
+        // Close mobile menu when window resizes to desktop size
+        window.addEventListener('resize', function() {
+            const menu = document.getElementById('mobile-menu-expanded');
+            if (window.innerWidth >= 768 && menu && !menu.classList.contains('hidden')) {
+                menu.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

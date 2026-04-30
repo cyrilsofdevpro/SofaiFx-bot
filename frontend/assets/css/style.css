@@ -1,0 +1,233 @@
+/* Custom styles and animations */
+
+/* Smooth scrollbar for signal containers */
+#signals-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#signals-container::-webkit-scrollbar-track {
+    background: #334155;
+    border-radius: 10px;
+}
+
+#signals-container::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 10px;
+}
+
+#signals-container::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* Table scrollbar */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: #334155;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 10px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+}
+
+/* Card hover effect */
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Signal badge pulse */
+@keyframes pulse-badge {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.signal-badge-new {
+    animation: pulse-badge 2s ease-in-out infinite;
+}
+
+/* Loading spinner */
+@keyframes spin-custom {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spinner {
+    animation: spin-custom 1s linear infinite;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Mobile Navigation */
+    nav .flex {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    /* Mobile Auth Modal */
+    #auth-modal > div {
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+    
+    /* Mobile Buttons */
+    button {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    /* Mobile Card Padding */
+    .bg-slate-800 {
+        padding: 1rem !important;
+    }
+    
+    /* Mobile Input Fields */
+    input, textarea, select {
+        font-size: 1rem; /* Prevents zoom on iOS */
+        padding: 0.75rem 1rem;
+    }
+    
+    /* Mobile Charts */
+    #trading-chart {
+        height: 300px !important;
+    }
+    
+    /* Mobile Form Grid */
+    .grid-cols-3 {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Pair tabs - more compact */
+    .pair-tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Glass morphism effect for modals/special elements */
+
+/* Pair Tab Styles */
+.pair-tab {
+    background-color: #475569;
+    color: #d1d5db;
+    border: 1px solid #374151;
+}
+
+.pair-tab:hover {
+    background-color: #64748b;
+    color: #f3f4f6;
+    border-color: #4b5563;
+    transform: translateY(-2px);
+}
+
+.pair-tab.active-tab {
+    background: linear-gradient(135deg, #10b981, #3b82f6);
+    color: #ffffff;
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.pair-tab.active-tab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+/* Chart Container Styling */
+#trading-chart {
+    background-color: #0f172a;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+#trading-chart canvas {
+    max-width: 100%;
+}
+
+/* Smooth transitions for chart updates */
+@keyframes fade-in-chart {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+#trading-chart {
+    animation: fade-in-chart 0.3s ease-in-out;
+}
+
+/* Chart info cards hover effect */
+#trading-chart ~ .grid > div {
+    transition: all 0.2s ease;
+}
+
+#trading-chart ~ .grid > div:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+.glass {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Smooth transitions */
+* {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Button enhancements */
+button:active {
+    transform: scale(0.98);
+}
+
+/* Input focus effects */
+input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Chart container styling */
+canvas {
+    max-height: 300px;
+}
