@@ -18,23 +18,11 @@ const APIConfig = {
             return customUrl;
         }
 
-        // Production: Use explicit backend URL
+        // Production: Use SAME ORIGIN as frontend (frontend + backend together)
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            // For Render/HF deployment, use explicit backend URL
-            const protocol = 'https:';  // Always HTTPS for production
-            
-            // Detect if this is frontend or separate backend
-            // If backend is deployed separately on Render
-            if (window.location.hostname.includes('render.com')) {
-                // Frontend is on Render, backend is on separate Render instance
-                const backendUrl = 'https://sofai-fx-api.onrender.com';  // Update this if backend hostname differs
-                console.log('🌐 Render production - Backend API URL:', backendUrl);
-                return backendUrl;
-            }
-            
-            // Default: use same origin as frontend
-            const baseUrl = `${protocol}//${window.location.host}`;
-            console.log('🌐 Production mode - API URL:', baseUrl);
+            // Use same origin - frontend and backend are deployed together
+            const baseUrl = `${window.location.protocol}//${window.location.host}`;
+            console.log('🌐 Production mode - Same origin API URL:', baseUrl);
             return baseUrl;
         }
 
