@@ -40,11 +40,11 @@ RUN pip install --upgrade pip setuptools wheel && \
     cryptography>=41.0.0 \
     PyJWT>=2.8.0 \
     APScheduler==3.10.4 \
-    huggingface_hub>=1.13.0 \
-    transformers>=4.30.0 \
-    uvicorn>=0.23.2
+    huggingface_hub==0.16.4 \
+    transformers==4.30.0
 
 # Copy entire project
+# Note: uvicorn removed - Flask is WSGI app, not ASGI
 COPY . /app
 
 # Expose port 7860 (required by Hugging Face Spaces)
@@ -52,6 +52,9 @@ EXPOSE 7860
 
 # Set environment variables for HF Spaces
 ENV FLASK_PORT=7860
+ENV WORKERS=1
 
-# Run the Flask app
-CMD ["python", "backend/src/main.py"]
+# Run with gunicorn (production WSGI server)
+# This requires being in backend directory context
+WORKDIR /app/backend
+CMD ["gunicorn", "--workers=1", "--bind=0.0.0.0:7860", "--timeout=30", "src.api.flask_app:app"]

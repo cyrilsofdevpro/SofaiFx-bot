@@ -51,10 +51,10 @@ RUN pip install --no-cache-dir \
     PyJWT>=2.8.0 \
     APScheduler==3.10.4 \
     huggingface_hub==0.16.4 \
-    transformers==4.30.0 \
-    uvicorn>=0.23.2
+    transformers==4.30.0
 
 # Note: MetaTrader5 removed - not supported on Linux/Render
+# Note: uvicorn removed - Flask is WSGI app, not ASGI
 
 # Copy entire project
 COPY . /app
@@ -64,6 +64,8 @@ EXPOSE 7860
 
 # Set environment variables for HF Spaces
 ENV FLASK_PORT=7860
+ENV WORKERS=1
 
-# Run the Flask app from backend/src
-CMD ["python", "src/main.py"]
+# Run with gunicorn (production WSGI server)
+# src.api.flask_app:app = module.submodule:app_variable
+CMD ["gunicorn", "--workers=1", "--bind=0.0.0.0:7860", "--timeout=30", "src.api.flask_app:app"]
