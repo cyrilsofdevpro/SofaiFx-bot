@@ -72,7 +72,18 @@ logger.info(f'JWT Secret Key configured: {jwt_secret[:20]}...')
 # Initialize extensions
 init_db(app)
 jwt = JWTManager(app)
-CORS(app, supports_credentials=True, allow_headers=['Content-Type', 'Authorization'])
+
+# CORS Configuration - Allow all origins for mobile/testing
+# In production, restrict to specific frontend domains
+cors_config = {
+    'origins': '*',  # Allow all origins for mobile WebView compatibility
+    'supports_credentials': True,
+    'allow_headers': ['Content-Type', 'Authorization'],
+    'methods': ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    'max_age': 3600
+}
+CORS(app, resources={r"/api/*": cors_config, r"/auth/*": cors_config})
+logger.info('✓ CORS enabled for all origins (development mode)')
 
 # Register blueprints
 app.register_blueprint(auth_bp)

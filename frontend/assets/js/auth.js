@@ -2,9 +2,22 @@
  * Authentication System - Multi-Tab Support
  * Each tab/window has independent session using sessionStorage
  * Allows multiple accounts to be logged in simultaneously in different tabs
+ * 
+ * API Configuration:
+ * - Uses APIConfig for base URL
+ * - Falls back to localhost:5000 if APIConfig not loaded
+ * - Supports custom API URLs via setApiUrl()
  */
 
 const AuthSystem = {
+    // Get API base URL (with fallback)
+    _getApiUrl() {
+        if (typeof APIConfig !== 'undefined' && APIConfig.baseUrl) {
+            return APIConfig.baseUrl;
+        }
+        return 'http://localhost:5000';
+    },
+
     // Promise that resolves when auth initialization is complete
     _authReadyPromise: null,
     _authReadyResolve: null,
@@ -45,7 +58,8 @@ const AuthSystem = {
         try {
             console.log('🔐 Login attempt:', email);
             
-            const response = await fetch('http://localhost:5000/auth/login', {
+            const apiUrl = this._getApiUrl();
+            const response = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -54,6 +68,7 @@ const AuthSystem = {
             const data = await response.json();
             
             if (!response.ok) {
+                console.error('❌ Login failed:', response.status, data.error);
                 throw new Error(data.error || 'Login failed');
             }
             
@@ -125,7 +140,8 @@ const AuthSystem = {
         try {
             console.log('📝 Registration attempt:', email);
             
-            const response = await fetch('http://localhost:5000/auth/register', {
+            const apiUrl = this._getApiUrl();
+            const response = await fetch(`${apiUrl}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password })
@@ -134,6 +150,7 @@ const AuthSystem = {
             const data = await response.json();
             
             if (!response.ok) {
+                console.error('❌ Registration failed:', response.status, data.error);
                 throw new Error(data.error || 'Registration failed');
             }
             
@@ -168,7 +185,8 @@ const AuthSystem = {
         if (!token) return false;
         
         try {
-            const response = await fetch('http://localhost:5000/auth/verify', {
+            const apiUrl = this._getApiUrl();
+            const response = await fetch(`${apiUrl}/auth/verify`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -177,7 +195,7 @@ const AuthSystem = {
             });
             
             if (!response.ok) {
-                console.warn('⚠️ Token validation failed - clearing auth');
+                console.warn('⚠️ Token validation failed:', response.status);
                 this.clearAuth();
                 return false;
             }

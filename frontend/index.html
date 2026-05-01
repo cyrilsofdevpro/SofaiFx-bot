@@ -11,9 +11,13 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/features.css">
     <link rel="stylesheet" href="assets/css/mt5-connection.css">
-    <!-- JWT Interceptor - Must load before auth.js -->
+    <!-- API Configuration - Must load first -->
+    <script src="assets/js/config.js?v=1" defer></script>
+    <!-- JWT Interceptor - Loads before auth.js -->
     <script src="assets/js/jwt-interceptor.js?v=1" defer></script>
-    <script src="assets/js/auth.js?v=9" defer></script>
+    <!-- Mobile Network Detection -->
+    <script src="assets/js/mobile-network-detector.js?v=1" defer></script>
+    <script src="assets/js/auth.js?v=10" defer></script>
     <script src="assets/js/utils.js?v=3" defer></script>
     <script src="assets/js/mt5-account.js?v=4" defer></script>
     <script src="assets/js/mt5-connection.js?v=3" defer></script>

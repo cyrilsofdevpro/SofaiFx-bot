@@ -13,7 +13,13 @@
 const JWTInterceptor = {
     // Configuration
     config: {
-        apiBaseUrl: 'http://localhost:5000',
+        get apiBaseUrl() {
+            // Use APIConfig if available, otherwise default to localhost
+            if (typeof APIConfig !== 'undefined' && APIConfig.baseUrl) {
+                return APIConfig.baseUrl;
+            }
+            return 'http://localhost:5000';
+        },
         tokenKey: 'access_token',
         refreshTokenKey: 'refresh_token',
         tokenExpiryKey: 'token_expiry',
@@ -204,8 +210,22 @@ const JWTInterceptor = {
         window.fetch = async (...args) => {
             let [resource, config] = args;
             
+            // Check network state before making request
+            if (typeof MobileNetworkDetector !== 'undefined') {
+                const status = MobileNetworkDetector.getStatus();
+                if (!status.isOnline) {
+                    console.error('📡 Device is offline - request blocked');
+                    const error = new Error('Device is offline');
+                    error.status = 0;
+                    throw error;
+                }
+                if (!status.isBackendAvailable && resource.includes('/api')) {
+                    console.error('🔧 Backend unavailable - request may fail');
+                }
+            }
+            
             // Only add auth header to API calls, not external resources
-            if (typeof resource === 'string' && resource.includes('/api') || resource.includes('/auth')) {
+            if (typeof resource === 'string' && (resource.includes('/api') || resource.includes('/auth'))) {
                 config = config || {};
                 config.headers = config.headers || {};
 
