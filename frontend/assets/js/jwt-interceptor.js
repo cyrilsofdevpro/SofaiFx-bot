@@ -219,8 +219,9 @@ const JWTInterceptor = {
                     error.status = 0;
                     throw error;
                 }
-                if (!status.isBackendAvailable && resource.includes('/api')) {
-                    console.error('🔧 Backend unavailable - request may fail');
+                // Just log warning - don't block requests
+                if (!status.isBackendAvailable) {
+                    console.warn('⚠️ Backend may be unavailable - trying anyway...');
                 }
             }
             

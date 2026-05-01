@@ -12,17 +12,16 @@
 const MobileNetworkDetector = {
     // Configuration
     config: {
-        healthCheckInterval: 30000,  // 30 seconds
-        healthCheckTimeout: 20000,   // 20 seconds (allow for Render cold start)
-        debounceDelay: 2000,         // 2 second debounce (reduce false positives)
-        maxRetries: 5,               // More retries for cold starts
-        initialRetryDelay: 2000      // 2s delay before first retry
+        healthCheckInterval: 60000,  // 60 seconds (less aggressive)
+        debounceDelay: 2000,         // 2 second debounce
+        maxRetries: 2,               // Fewer retries
+        initialRetryDelay: 3000      // 3s delay
     },
 
     // State tracking
     state: {
         isOnline: navigator.onLine,
-        isBackendAvailable: false,
+        isBackendAvailable: true,  // Default to true - assume available
         lastHealthCheck: null,
         lastError: null,
         retryCount: 0
@@ -42,11 +41,11 @@ const MobileNetworkDetector = {
         window.addEventListener('online', () => this._onNetworkChange('online'));
         window.addEventListener('offline', () => this._onNetworkChange('offline'));
 
-        // Start periodic health checks
+        // Start periodic health checks (less aggressive)
         this._startHealthChecks();
 
-        // Initial health check
-        this.checkBackendHealth();
+        // Initial health check after a short delay
+        setTimeout(() => this.checkBackendHealth(), 2000);
 
         console.log('✅ Network detector ready');
     },
@@ -70,8 +69,9 @@ const MobileNetworkDetector = {
             console.log(`✅ Network state confirmed: ${status}`);
 
             if (isOnline) {
-                console.log('🟢 Device is ONLINE - checking backend...');
-                // Reset retry count on network recovery
+                console.log('🟢 Device is ONLINE - backend assumed available');
+                // Reset - assume backend is available when device is online
+                this.state.isBackendAvailable = true;
                 this.state.retryCount = 0;
                 this.checkBackendHealth();
                 this._dispatchEvent('network:online', { isOnline: true });
@@ -84,84 +84,50 @@ const MobileNetworkDetector = {
     },
 
     /**
-     * Check if backend is available
+     * Check if backend is available - simplified
      */
     async checkBackendHealth() {
         try {
             const apiUrl = typeof APIConfig !== 'undefined' ? APIConfig.baseUrl : 'http://localhost:5000';
-            
-            // Try /health first, fallback to /api/health/minimal
-            const healthUrls = [
-                `${apiUrl}/health`,
-                `${apiUrl}/api/health/minimal`,
-                `${apiUrl}/api/dashboard/health`
-            ];
+            const healthUrl = `${apiUrl}/health`;
 
-            console.log(`🏥 [Attempt ${this.state.retryCount + 1}] Checking backend health...`);
+            console.log(`🏥 Checking backend health: ${healthUrl}`);
 
-            let lastError = null;
-            let success = false;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-            for (const healthUrl of healthUrls) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), this.config.healthCheckTimeout);
+            const response = await fetch(healthUrl, {
+                method: 'GET',
+                signal: controller.signal,
+                mode: 'cors'
+            });
 
-                    const startTime = performance.now();
-                    const response = await fetch(healthUrl, {
-                        method: 'GET',
-                        signal: controller.signal,
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
+            clearTimeout(timeoutId);
 
-                    clearTimeout(timeoutId);
-                    const duration = Math.round(performance.now() - startTime);
+            if (response.ok) {
+                this.state.isBackendAvailable = true;
+                this.state.lastHealthCheck = new Date();
+                this.state.retryCount = 0;
+                this.state.lastError = null;
 
-                    if (response.ok) {
-                        this.state.isBackendAvailable = true;
-                        this.state.lastHealthCheck = new Date();
-                        this.state.retryCount = 0;
-                        this.state.lastError = null;
+                console.log('✅ Backend is HEALTHY');
+                this._dispatchEvent('backend:healthy', { available: true });
 
-                        console.log(`✅ Backend is HEALTHY at ${healthUrl} (responded in ${duration}ms)`);
-                        this._dispatchEvent('backend:healthy', { available: true, url: healthUrl });
-                        return true;
-                    }
-                } catch (e) {
-                    lastError = e.message;
-                    console.log(`⚠️ ${healthUrl} failed: ${e.message}`);
-                }
+                return true;
+            } else {
+                throw new Error(`Health check failed: HTTP ${response.status}`);
             }
 
-            throw new Error(lastError || 'All health endpoints failed');
-
         } catch (error) {
-            this.state.isBackendAvailable = false;
+            // Don't mark as unavailable - just log the error
+            // The app should still try to make API calls
             this.state.lastError = error.message;
             this.state.retryCount++;
 
-            console.warn(`⚠️ [Attempt ${this.state.retryCount}] Health check failed: ${error.message}`);
+            console.warn(`⚠️ Health check warning: ${error.message}`);
+            console.log('🔄 Will try API calls anyway...');
 
-            if (this.state.retryCount < this.config.maxRetries) {
-                const delay = Math.min(5000, this.config.initialRetryDelay * Math.pow(1.5, this.state.retryCount - 1));
-                console.log(`🔄 Retrying in ${delay}ms... (${this.state.retryCount}/${this.config.maxRetries})`);
-                
-                setTimeout(() => {
-                    if (this.state.isOnline) {
-                        this.checkBackendHealth();
-                    }
-                }, delay);
-            } else {
-                console.error(`❌ Backend unavailable after ${this.state.retryCount} attempts`);
-                this._dispatchEvent('backend:unavailable', {
-                    available: false,
-                    error: error.message,
-                    retries: this.state.retryCount
-                });
-            }
-
+            // Don't dispatch unavailable event - let the app try
             return false;
         }
     },
