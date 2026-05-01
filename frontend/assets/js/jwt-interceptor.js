@@ -225,32 +225,43 @@ const JWTInterceptor = {
                 }
             }
             
-            // Only add auth header to API calls, not external resources
+            // Only add auth header to API calls, but NOT for login/register
             if (typeof resource === 'string' && (resource.includes('/api') || resource.includes('/auth'))) {
-                config = config || {};
-                config.headers = config.headers || {};
+                // Skip auth header for login/register endpoints (they don't need it)
+                if (resource.includes('/auth/login') || resource.includes('/auth/register')) {
+                    console.debug('📤 Skipping auth header for login/register');
+                } else {
+                    config = config || {};
+                    config.headers = config.headers || {};
 
-                const token = this.getToken();
-                if (token) {
-                    config.headers['Authorization'] = `Bearer ${token}`;
-                    console.debug('📤 Authorization header added');
+                    const token = this.getToken();
+                    if (token) {
+                        config.headers['Authorization'] = `Bearer ${token}`;
+                        console.debug('📤 Authorization header added');
+                    }
                 }
             }
 
             let response = await originalFetch(resource, config);
 
-            // Handle 401 Unauthorized - token expired
+            // Handle 401 Unauthorized - but NOT for login/register (they return 401 for invalid credentials)
             if (response.status === 401 && !config._retry) {
-                console.warn('⚠️ Received 401 Unauthorized - attempting token refresh');
-                
-                config._retry = true;
-                const newToken = await this.refreshAccessToken();
-
-                if (newToken) {
-                    config.headers['Authorization'] = `Bearer ${newToken}`;
-                    response = await originalFetch(resource, config);
+                // Skip token refresh for login/register - 401 means invalid credentials
+                if (typeof resource === 'string' && (resource.includes('/auth/login') || resource.includes('/auth/register'))) {
+                    console.warn('⚠️ Login/Register failed - invalid credentials');
+                    // Don't try to refresh - just return the 401
                 } else {
-                    console.error('❌ Token refresh failed - redirecting to login');
+                    console.warn('⚠️ Received 401 Unauthorized - attempting token refresh');
+                    
+                    config._retry = true;
+                    const newToken = await this.refreshAccessToken();
+
+                    if (newToken) {
+                        config.headers['Authorization'] = `Bearer ${newToken}`;
+                        response = await originalFetch(resource, config);
+                    } else {
+                        console.error('❌ Token refresh failed - redirecting to login');
+                    }
                 }
             }
 
