@@ -14,14 +14,25 @@ const APIConfig = {
         // Check for custom URL in sessionStorage/localStorage (for testing)
         const customUrl = sessionStorage.getItem('API_BASE_URL') || localStorage.getItem('API_BASE_URL');
         if (customUrl) {
-            console.log('🌐 Using custom API URL:', customUrl);
+            console.log('🌐 Custom API URL override:', customUrl);
             return customUrl;
         }
 
-        // Production: Use window.location for relative URLs
+        // Production: Use explicit backend URL
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            // For deployed frontend, use same origin
-            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            // For Render/HF deployment, use explicit backend URL
+            const protocol = 'https:';  // Always HTTPS for production
+            
+            // Detect if this is frontend or separate backend
+            // If backend is deployed separately on Render
+            if (window.location.hostname.includes('render.com')) {
+                // Frontend is on Render, backend is on separate Render instance
+                const backendUrl = 'https://sofai-fx-api.onrender.com';  // Update this if backend hostname differs
+                console.log('🌐 Render production - Backend API URL:', backendUrl);
+                return backendUrl;
+            }
+            
+            // Default: use same origin as frontend
             const baseUrl = `${protocol}//${window.location.host}`;
             console.log('🌐 Production mode - API URL:', baseUrl);
             return baseUrl;
@@ -127,7 +138,27 @@ const APIConfig = {
         console.log('Base URL:', this.baseUrl);
         console.log('Environment:', window.location.hostname);
         console.log('Protocol:', window.location.protocol);
+        console.log('Custom Override:', sessionStorage.getItem('API_BASE_URL') || localStorage.getItem('API_BASE_URL') || 'None');
         console.groupEnd();
+    },
+
+    /**
+     * Test backend connectivity
+     */
+    async testConnection() {
+        console.log(`🧪 Testing connection to ${this.baseUrl}/health...`);
+        try {
+            const response = await fetch(`${this.baseUrl}/health`, {
+                method: 'GET',
+                timeout: 15000
+            });
+            const data = await response.json();
+            console.log('✅ Backend is reachable:', data);
+            return { success: true, data };
+        } catch (error) {
+            console.error('❌ Backend connection failed:', error.message);
+            return { success: false, error: error.message };
+        }
     }
 };
 
