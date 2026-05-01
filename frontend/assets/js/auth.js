@@ -57,14 +57,29 @@ const AuthSystem = {
                 throw new Error(data.error || 'Login failed');
             }
             
+            // ✅ Save token using JWT interceptor (mobile-safe)
+            if (typeof JWTInterceptor !== 'undefined') {
+                console.log('💾 Using JWTInterceptor for token storage');
+                JWTInterceptor.setToken(
+                    data.access_token,
+                    data.refresh_token || null,
+                    data.expires_in || 3600
+                );
+            } else {
+                console.log('💾 Using AuthSystem for token storage (fallback)');
+            }
+            
             // ✅ Save token and user
             this.setAuth(data.access_token, data.user);
             console.log('✅ Login successful:', data.user.name);
             
             // Verify token was saved after a small delay
             setTimeout(() => {
-                const savedToken = localStorage.getItem('access_token');
+                const savedToken = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
                 console.log('✅ Token verified:', savedToken ? 'yes' : 'no');
+                if (typeof JWTInterceptor !== 'undefined') {
+                    JWTInterceptor.debugAuthState();
+                }
             }, 200);
             
             // Hide modal immediately

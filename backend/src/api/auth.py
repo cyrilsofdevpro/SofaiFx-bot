@@ -60,10 +60,17 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        # Generate token (identity must be a string)
+        # Generate token (valid for 30 days, identity must be a string)
         access_token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(days=30)
+        )
+        
+        # Generate refresh token (valid for 90 days)
+        refresh_token = create_access_token(
+            identity=str(user.id),
+            expires_delta=timedelta(days=90),
+            fresh=False
         )
         
         logger.info(f'New user registered: {name} ({email})')
@@ -71,7 +78,9 @@ def register():
         return jsonify({
             'message': 'Registration successful',
             'user': user.to_dict(),
-            'access_token': access_token
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': 30 * 24 * 60 * 60  # 30 days in seconds
         }), 201
         
     except Exception as e:
@@ -121,12 +130,21 @@ def login():
             expires_delta=timedelta(days=30)
         )
         
+        # Generate refresh token (valid for 90 days)
+        refresh_token = create_access_token(
+            identity=str(user.id),
+            expires_delta=timedelta(days=90),
+            fresh=False
+        )
+        
         logger.info(f'User logged in: {user.name} ({email})')
         
         return jsonify({
             'message': 'Login successful',
             'user': user.to_dict(),
-            'access_token': access_token
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': 30 * 24 * 60 * 60  # 30 days in seconds
         }), 200
         
     except Exception as e:
@@ -189,6 +207,67 @@ def verify_token():
             'error': 'Token verification failed',
             'user': None
         }), 401
+
+
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh():
+    """
+    Refresh access token using refresh token
+    
+    Request body:
+    {
+        "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    }
+    
+    Returns: New access token
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('refresh_token'):
+            return jsonify({'error': 'Refresh token required'}), 400
+        
+        refresh_token_str = data.get('refresh_token')
+        
+        # Decode and validate refresh token manually (without jwt_required decorator)
+        try:
+            from flask_jwt_extended import decode_token
+            decoded = decode_token(refresh_token_str)
+            user_id = int(decoded['sub'])
+        except Exception as e:
+            logger.warning(f'Invalid refresh token: {str(e)}')
+            return jsonify({'error': 'Invalid or expired refresh token'}), 401
+        
+        # Verify user exists
+        user = User.query.get(user_id)
+        if not user or not user.is_active:
+            return jsonify({'error': 'User not found or inactive'}), 401
+        
+        # Generate new access token (valid for 30 days)
+        new_access_token = create_access_token(
+            identity=str(user.id),
+            expires_delta=timedelta(days=30)
+        )
+        
+        # Generate new refresh token (valid for 90 days)
+        new_refresh_token = create_access_token(
+            identity=str(user.id),
+            expires_delta=timedelta(days=90),
+            fresh=False
+        )
+        
+        logger.info(f'Token refreshed for user: {user.name}')
+        
+        return jsonify({
+            'message': 'Token refreshed successfully',
+            'access_token': new_access_token,
+            'refresh_token': new_refresh_token,
+            'expires_in': 30 * 24 * 60 * 60  # 30 days in seconds
+        }), 200
+        
+    except Exception as e:
+        logger.error(f'Token refresh error: {str(e)}')
+        return jsonify({'error': 'Token refresh failed'}), 500
 
 
 @auth_bp.route('/change-password', methods=['POST'])
