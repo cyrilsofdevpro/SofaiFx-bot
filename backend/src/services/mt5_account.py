@@ -23,6 +23,9 @@ import logging
 from typing import Optional, Dict, Any
 from datetime import datetime
 
+# Initialize logger FIRST (before any logging calls)
+logger = logging.getLogger(__name__)
+
 # Detect platform - Linux/Render vs Windows
 _IS_LINUX = os.name == 'posix' or os.getenv('RENDER') == 'true'
 
@@ -38,8 +41,6 @@ else:
     except ImportError:
         mt5 = None
         logger.warning("MT5AccountService: MetaTrader5 not available")
-
-logger = logging.getLogger(__name__)
 
 
 class MT5AccountService:

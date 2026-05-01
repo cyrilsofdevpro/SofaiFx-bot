@@ -15,6 +15,9 @@ import threading
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 
+# Initialize logger FIRST
+logger = logging.getLogger(__name__)
+
 # Detect platform
 _IS_LINUX = os.name == 'posix' or os.getenv('RENDER') == 'true'
 
@@ -27,8 +30,6 @@ else:
         import MetaTrader5 as mt5
     except ImportError:
         mt5 = None
-
-logger = logging.getLogger(__name__)
 
 # Thread-safe storage for user MT5 sessions
 _user_sessions_lock = threading.RLock()
