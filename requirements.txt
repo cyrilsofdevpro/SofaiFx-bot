@@ -14,7 +14,6 @@ Werkzeug==2.3.7
 gunicorn==21.2.0
 scikit-learn==1.4.2
 scipy==1.11.4
-MetaTrader5==5.0.45
 cryptography>=41.0.0
 PyJWT>=2.8.0
 itsdangerous>=2.1.0

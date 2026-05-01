@@ -54,6 +54,8 @@ RUN pip install --no-cache-dir \
     transformers>=4.30.0 \
     uvicorn>=0.23.2
 
+# Note: MetaTrader5 removed - not supported on Linux/Render
+
 # Copy entire project
 COPY . /app
 
