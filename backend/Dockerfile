@@ -50,8 +50,8 @@ RUN pip install --no-cache-dir \
     cryptography>=41.0.0 \
     PyJWT>=2.8.0 \
     APScheduler==3.10.4 \
-    huggingface_hub>=1.13.0 \
-    transformers>=4.30.0 \
+    huggingface_hub==0.16.4 \
+    transformers==4.30.0 \
     uvicorn>=0.23.2
 
 # Note: MetaTrader5 removed - not supported on Linux/Render
