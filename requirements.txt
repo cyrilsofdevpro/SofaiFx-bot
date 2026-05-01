@@ -21,3 +21,5 @@ APScheduler==3.10.4
 huggingface_hub==1.13.0
 transformers==4.30.0
 uvicorn==0.23.2
+setuptools>=65.0.0
+wheel>=0.40.0

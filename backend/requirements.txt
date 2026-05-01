@@ -5,8 +5,8 @@ Flask-Bcrypt==1.0.1
 Flask-JWT-Extended==4.5.2
 python-dotenv==1.0.0
 requests==2.31.0
-pandas==2.0.3
-numpy==1.24.3
+pandas>=2.2.0
+numpy>=2.0.0
 alpha-vantage==2.3.1
 python-telegram-bot==20.1
 schedule==1.2.0
@@ -17,3 +17,9 @@ MetaTrader5==5.0.45
 cryptography>=41.0.0
 PyJWT>=2.8.0
 itsdangerous>=2.1.0
+APScheduler==3.10.4
+huggingface_hub==1.13.0
+transformers==4.30.0
+uvicorn==0.23.2
+setuptools>=65.0.0
+wheel>=0.40.0
