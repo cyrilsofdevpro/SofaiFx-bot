@@ -1,17 +1,43 @@
 """
-MT5 Account Service - Manages MT5 account information retrieval and management
+MT5 Account Service - Cross-Platform Implementation
 
 This module handles:
-- Live account data retrieval from MT5 terminal
+- Live account data retrieval from MT5 terminal (Windows)
+- Stub implementation for Linux/Render environments
 - Account info formatting for API responses
 - Connection status checking
 - Account balance/equity/margin tracking
+
+Platform Detection:
+- Windows: Uses actual MetaTrader5 package
+- Linux/Render: Returns stub data with clear messaging
+
+Trade Execution Architecture:
+- Backend (Render): Signal generation only
+- Windows VPS/PC: Trade execution via MT5 terminal
+- Communication: REST API or messaging layer
 """
 
-import MetaTrader5 as mt5
-from datetime import datetime
+import os
 import logging
 from typing import Optional, Dict, Any
+from datetime import datetime
+
+# Detect platform - Linux/Render vs Windows
+_IS_LINUX = os.name == 'posix' or os.getenv('RENDER') == 'true'
+
+# Conditional import - only on Windows
+if _IS_LINUX:
+    # Linux/Render: Stub implementation
+    mt5 = None
+    logger.warning("MT5AccountService: Running on Linux - using stub implementation")
+else:
+    # Windows: Import actual MT5
+    try:
+        import MetaTrader5 as mt5
+    except ImportError:
+        mt5 = None
+        logger.warning("MT5AccountService: MetaTrader5 not available")
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +56,10 @@ class MT5AccountService:
     @staticmethod
     def get_account_info() -> Dict[str, Any]:
         """
-        Get live account information from MT5 terminal.
+        Get account information from MT5 terminal.
+        
+        On Linux/Render: Returns stub data explaining MT5 not available
+        On Windows: Returns live data from MT5 terminal
         
         Returns:
             dict: Account information or connection error info
@@ -51,6 +80,31 @@ class MT5AccountService:
                 "timestamp": "2024-04-26T10:30:45.123456"
             }
         """
+        # Linux/Render stub
+        if _IS_LINUX or mt5 is None:
+            logger.warning("MT5AccountService: Running on Linux/Render - MT5 not available")
+            return {
+                "connected": False,
+                "platform": "linux" if _IS_LINUX else "windows_no_mt5",
+                "message": "MT5 not available on Linux/Render. Deploy Windows VPS for trade execution.",
+                "error": "MT5_NOT_AVAILABLE",
+                "docs": "See MT5_SETUP_REQUIRED.md for deployment instructions",
+                "balance": 0,
+                "equity": 0,
+                "margin": 0,
+                "free_margin": 0,
+                "margin_level": 0,
+                "leverage": 0,
+                "currency": "USD",
+                "login": 0,
+                "server": "N/A",
+                "trade_mode": "disabled",
+                "account_type": "stub",
+                "execution_mode": "signals_only",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+        # Windows: Use actual MT5
         try:
             # Check if MT5 is initialized
             if mt5.version() is None:
@@ -160,6 +214,15 @@ class MT5AccountService:
         Returns:
             dict: Connection status information
         """
+        # Linux/Render stub
+        if _IS_LINUX or mt5 is None:
+            return {
+                "connected": False,
+                "platform": "linux" if _IS_LINUX else "windows_no_mt5",
+                "message": "MT5 not available on Linux/Render",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
         try:
             if mt5.version() is None:
                 return {
@@ -194,6 +257,17 @@ class MT5AccountService:
         Returns:
             dict: Summary of open positions
         """
+        # Linux/Render stub
+        if _IS_LINUX or mt5 is None:
+            return {
+                "connected": False,
+                "platform": "linux" if _IS_LINUX else "windows_no_mt5",
+                "message": "MT5 positions unavailable on Linux/Render",
+                "positions": [],
+                "total_positions": 0,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
         try:
             if mt5.version() is None:
                 return {

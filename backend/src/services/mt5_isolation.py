@@ -3,13 +3,30 @@ MT5 User Isolation Service - Manages isolated MT5 connections per user
 
 Each user has their own MT5 connection that is completely isolated from other users.
 No user can access another user's MT5 account, credentials, or trades.
+
+Platform Detection:
+- Windows: Uses actual MetaTrader5 package
+- Linux/Render: Returns stub data
 """
 
-import MetaTrader5 as mt5
-from datetime import datetime
-from typing import Dict, Any, Optional, Tuple
+import os
 import logging
 import threading
+from datetime import datetime
+from typing import Dict, Any, Optional, Tuple
+
+# Detect platform
+_IS_LINUX = os.name == 'posix' or os.getenv('RENDER') == 'true'
+
+# Conditional import
+if _IS_LINUX:
+    mt5 = None
+    logger.warning("MT5UserIsolation: Running on Linux - using stub")
+else:
+    try:
+        import MetaTrader5 as mt5
+    except ImportError:
+        mt5 = None
 
 logger = logging.getLogger(__name__)
 

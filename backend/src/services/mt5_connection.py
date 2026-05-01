@@ -2,13 +2,30 @@
 MT5 Connection Manager - Handles user MT5 account connections
 
 Manages per-user MT5 sessions and connection lifecycle
+
+Platform Detection:
+- Windows: Uses actual MetaTrader5 package
+- Linux/Render: Returns stub data
 """
 
-import MetaTrader5 as mt5
-from datetime import datetime
+import os
 import logging
 from typing import Optional, Dict, Any
 from threading import Lock
+from datetime import datetime
+
+# Detect platform
+_IS_LINUX = os.name == 'posix' or os.getenv('RENDER') == 'true'
+
+# Conditional import
+if _IS_LINUX:
+    mt5 = None
+    logger.warning("MT5ConnectionManager: Running on Linux - using stub")
+else:
+    try:
+        import MetaTrader5 as mt5
+    except ImportError:
+        mt5 = None
 
 logger = logging.getLogger(__name__)
 
