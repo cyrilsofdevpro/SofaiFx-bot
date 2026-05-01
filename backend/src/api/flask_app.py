@@ -82,8 +82,9 @@ cors_config = {
     'methods': ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     'max_age': 3600
 }
-CORS(app, resources={r"/api/*": cors_config, r"/auth/*": cors_config})
-logger.info('✓ CORS enabled for all origins (development mode)')
+# Apply CORS to ALL routes (not just /api/* and /auth/*)
+CORS(app, resources={r"/*": cors_config})
+logger.info('✓ CORS enabled for all origins and all routes')
 
 # Register blueprints
 app.register_blueprint(auth_bp)
