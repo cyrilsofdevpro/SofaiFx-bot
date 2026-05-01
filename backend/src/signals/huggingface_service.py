@@ -10,6 +10,7 @@ Version: 2.0.0
 
 import hashlib
 import time
+import os
 from ..utils.logger import logger
 from ..config import config
 

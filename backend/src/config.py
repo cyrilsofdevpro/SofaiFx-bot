@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from backend directory
+load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 
 class Config:
     # Alpha Vantage API
@@ -9,6 +10,9 @@ class Config:
     
     # Twelve Data API
     TWELVEDATA_API_KEY = os.getenv('TWELVEDATA_API_KEY', '')
+    
+    # Hugging Face API
+    HF_API_KEY = os.getenv('HF_API_KEY', '')
     
     # Telegram Bot
     TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
