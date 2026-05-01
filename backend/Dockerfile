@@ -1,11 +1,14 @@
 # Use Python 3.11 stable base image - FORCE THIS VERSION
 FROM python:3.11-slim
 
-# Set Python version explicitly
-ENV PYTHON_VERSION=3.11
+# Set Python version explicitly - FORCE PYTHON 3.11
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_PREFER_BINARY=1
+
+# Verify Python version
+RUN python --version && which python
 
 # Set working directory
 WORKDIR /app
@@ -19,9 +22,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements first (for better caching)
 COPY requirements.txt .
 
-# Install Python dependencies with explicit version constraints
+# Force binary wheels - avoid any source compilation
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir \
+    pip install --only-binary=:all: --no-deps --force-reinstall \
+    pandas==2.2.2 \
+    numpy==1.26.4 \
+    scikit-learn==1.4.2 \
+    scipy==1.11.4 || true
+
+# Install remaining dependencies (should be binary compatible)
+RUN pip install --no-cache-dir \
     pandas==2.2.2 \
     numpy==1.26.4 \
     scikit-learn==1.4.2 \
