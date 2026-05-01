@@ -5,17 +5,21 @@
  * 
  * API Configuration:
  * - Uses APIConfig for base URL
- * - Falls back to localhost:5000 if APIConfig not loaded
- * - Supports custom API URLs via setApiUrl()
+ * - Production-ready: uses same origin as frontend
  */
 
 const AuthSystem = {
-    // Get API base URL (with fallback)
+    // Get API base URL - MUST use APIConfig
     _getApiUrl() {
         if (typeof APIConfig !== 'undefined' && APIConfig.baseUrl) {
             return APIConfig.baseUrl;
         }
-        return 'http://localhost:5000';
+        // If APIConfig not loaded yet, try to get from window
+        if (typeof window !== 'undefined' && window.APIConfig && window.APIConfig.baseUrl) {
+            return window.APIConfig.baseUrl;
+        }
+        // Last resort - use current origin (works for production)
+        return window.location.origin;
     },
 
     // Promise that resolves when auth initialization is complete
@@ -57,6 +61,7 @@ const AuthSystem = {
     async login(email, password) {
         try {
             console.log('🔐 Login attempt:', email);
+            console.log('🔐 Using API URL:', this._getApiUrl());
             
             const apiUrl = this._getApiUrl();
             const response = await fetch(`${apiUrl}/auth/login`, {
@@ -68,9 +73,11 @@ const AuthSystem = {
             const data = await response.json();
             
             if (!response.ok) {
-                console.error('❌ Login failed:', response.status, data.error);
-                throw new Error(data.error || 'Login failed');
+                console.error('❌ Login failed:', response.status, data);
+                throw new Error(data.error || `Login failed (${response.status})`);
             }
+            
+            console.log('✅ Login response:', data);
             
             // ✅ Save token using JWT interceptor (mobile-safe)
             if (typeof JWTInterceptor !== 'undefined') {
@@ -86,16 +93,13 @@ const AuthSystem = {
             
             // ✅ Save token and user
             this.setAuth(data.access_token, data.user);
-            console.log('✅ Login successful:', data.user.name);
+            console.log('✅ Login successful for:', data.user.name);
             
-            // Verify token was saved after a small delay
+            // Verify token was saved
             setTimeout(() => {
                 const savedToken = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-                console.log('✅ Token verified:', savedToken ? 'yes' : 'no');
-                if (typeof JWTInterceptor !== 'undefined') {
-                    JWTInterceptor.debugAuthState();
-                }
-            }, 200);
+                console.log('✅ Token saved:', savedToken ? 'YES' : 'NO');
+            }, 100);
             
             // Hide modal immediately
             const modal = document.getElementById('auth-modal');
@@ -112,7 +116,7 @@ const AuthSystem = {
             window.dispatchEvent(new CustomEvent('userLoggedIn', { detail: data.user }));
             
         } catch (error) {
-            console.error('❌ Login error:', error.message);
+            console.error('❌ Login error:', error);
             if (typeof showNotification === 'function') {
                 showNotification(`❌ ${error.message}`, 'error');
             }
@@ -158,7 +162,7 @@ const AuthSystem = {
             this.setAuth(data.access_token, data.user);
             console.log('✅ Registration successful:', data.user.name);
             
-            // Hide modal and reload
+            // Hide modal - DON'T reload page, just update UI
             const modal = document.getElementById('auth-modal');
             if (modal) modal.classList.add('hidden');
             
@@ -166,7 +170,9 @@ const AuthSystem = {
                 showNotification(`✅ Account created! Welcome, ${data.user.name}!`, 'success');
             }
             
-            setTimeout(() => location.reload(), 500);
+            // Update UI without reloading
+            this.updateUserInfo();
+            window.dispatchEvent(new CustomEvent('userLoggedIn', { detail: data.user }));
             
         } catch (error) {
             console.error('❌ Registration error:', error.message);
