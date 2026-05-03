@@ -110,7 +110,10 @@ const AuthSystem = {
             }
             
             // Update UI without reloading the page
-            this.updateUserInfo();
+            await this.updateUserInfo();
+            if (typeof checkAdminStatus !== 'undefined') {
+                checkAdminStatus();
+            }
             
             // Trigger a custom event that other scripts can listen to
             window.dispatchEvent(new CustomEvent('userLoggedIn', { detail: data.user }));
@@ -171,7 +174,10 @@ const AuthSystem = {
             }
             
             // Update UI without reloading
-            this.updateUserInfo();
+            await this.updateUserInfo();
+            if (typeof checkAdminStatus !== 'undefined') {
+                checkAdminStatus();
+            }
             window.dispatchEvent(new CustomEvent('userLoggedIn', { detail: data.user }));
             
         } catch (error) {
@@ -314,11 +320,40 @@ const AuthSystem = {
         const userInfo = document.getElementById('user-info');
         const userName = document.getElementById('user-name');
         const userInfoMobile = document.getElementById('user-info-mobile');
+        const userNameMobile = document.getElementById('user-name-mobile');
         if (userInfo) userInfo.classList.add('hidden');
         if (userName) userName.textContent = '';
         if (userInfoMobile) userInfoMobile.classList.add('hidden');
+        if (userNameMobile) userNameMobile.textContent = '';
         
         console.log('🗑️ This tab\'s session cleared (other tabs unaffected)');
+    },
+
+    /**
+     * Show authentication modal and switch to login tab
+     */
+    showAuthModal() {
+        const authModal = document.getElementById('auth-modal');
+        if (!authModal) return;
+        authModal.classList.remove('hidden');
+        this.showLoginTab();
+    },
+
+    /**
+     * Show the login tab in the auth modal
+     */
+    showLoginTab() {
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        if (!loginTab || !registerTab || !loginForm || !registerForm) return;
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        loginTab.classList.add('border-b-2', 'border-green-500', 'text-white');
+        loginTab.classList.remove('text-gray-400');
+        registerTab.classList.remove('border-b-2', 'border-green-500', 'text-white');
+        registerTab.classList.add('text-gray-400');
     },
     
     /**
@@ -342,17 +377,16 @@ const AuthSystem = {
             if (typeof updateMobileUserInfo !== 'undefined') {
                 updateMobileUserInfo(this.user.name);
             }
-            
-            // Also update mobile token usage
+
+            const userNameMobile = document.getElementById('user-name-mobile');
+            if (userNameMobile) {
+                userNameMobile.textContent = this.user.name;
+            }
+
+            // Sync mobile token usage display after token usage refresh
             const tokenUsageMobile = document.getElementById('token-usage-mobile');
-            if (tokenUsageMobile && data.token_usage) {
-                const { tokens_used_today, tokens_limit, tokens_remaining, plan } = data.token_usage;
-                
-                if (plan === 'enterprise') {
-                    tokenUsageMobile.textContent = '∞';
-                } else if (tokens_limit > 0) {
-                    tokenUsageMobile.textContent = `${tokens_remaining}`;
-                }
+            if (tokenUsageMobile) {
+                tokenUsageMobile.textContent = document.getElementById('token-usage')?.textContent || '';
             }
             console.log('👤 User info updated:', this.user.name);
         } else {
@@ -483,8 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!isValid) {
                 console.warn('⚠️ Token validation failed - showing login modal');
-                if (authModal) authModal.classList.remove('hidden');
-                // Auth check complete
+                AuthSystem.showAuthModal();
                 if (AuthSystem._authReadyResolve) {
                     AuthSystem._authReadyResolve();
                 }
@@ -494,11 +527,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('✅ Token validated, user:', AuthSystem.user?.name);
             
             if (authModal) authModal.classList.add('hidden');
-            AuthSystem.updateUserInfo();
+            await AuthSystem.updateUserInfo();
+            if (typeof checkAdminStatus !== 'undefined') {
+                checkAdminStatus();
+            }
         } else {
             console.log('⚠️ No session in this tab - showing login modal');
             console.log('💡 You can login with a different account in each tab');
-            if (authModal) authModal.classList.remove('hidden');
+            AuthSystem.showAuthModal();
         }
         
         // Auth check complete - notify listeners (e.g., dashboard.js)

@@ -79,6 +79,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if user is admin and show admin button
     checkAdminStatus();
     
+    // Listen for login events so the dashboard can start loading signals immediately
+    window.addEventListener('userLoggedIn', async () => {
+        console.log('🔐 User logged in - refreshing dashboard auth state');
+        checkAdminStatus();
+        if (typeof AuthSystem !== 'undefined' && AuthSystem.isAuthenticated()) {
+            await loadSignals();
+            loadSignalBreakdown();
+            const signalInterval = dataOptimizer.getPollingInterval('signals');
+            if (!pollingIntervals.signals) {
+                pollingIntervals.signals = setInterval(loadSignals, signalInterval);
+                console.log(`📡 Signal polling started at ${signalInterval}ms after login`);
+            }
+        }
+    });
+    
     // Check trading bot status
     checkBotStatus();
     
@@ -1290,6 +1305,7 @@ function checkAdminStatus() {
         }
         console.log('✅ Admin user detected');
     } else {
+        adminBtn.classList.add('hidden');
         if (typeof updateMobileAdminBtn !== 'undefined') {
             updateMobileAdminBtn(false);
         }
