@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from src.base_strategy import BaseStrategy, TradeSignal, Signal
+from src.strategies.base_strategy import BaseStrategy, TradeSignal, Signal
 from src.utils.logger import logger
 
 class SupportResistanceStrategy(BaseStrategy):

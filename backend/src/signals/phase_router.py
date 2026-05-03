@@ -9,9 +9,9 @@ Author: SofAi FX Bot
 Version: 1.0.0
 """
 
-from src.lite_engine import LiteSignalEngine
-from src.signal_generator import SignalGenerator
-from src.phase4_ai_layer import Phase4AILayer
+from src.signals.lite_engine import LiteSignalEngine
+from src.signals.signal_generator import SignalGenerator
+from src.signals.phase4_ai_layer import Phase4AILayer
 from src.utils.logger import logger
 from src.config import config
 

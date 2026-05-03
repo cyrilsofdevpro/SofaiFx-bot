@@ -2,6 +2,6 @@
 Filters package for intelligent trade filtering.
 """
 
-from src.smart_filters import smart_filters
+from src.filters.smart_filters import smart_filters
 
 __all__ = ['smart_filters']

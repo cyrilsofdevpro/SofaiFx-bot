@@ -100,15 +100,15 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(execution_bp)
 
 # Register dashboard blueprint (Phase 5)
-from src.dashboard_routes import dashboard_bp
+from src.api.dashboard_routes import dashboard_bp
 app.register_blueprint(dashboard_bp)
 
 # Register stats blueprint (for frontend compatibility)
-from src.stats_routes import stats_bp
+from src.api.stats_routes import stats_bp
 app.register_blueprint(stats_bp)
 
 # Register MT5 isolation blueprint (Multi-user system)
-from src.mt5_isolation_routes import mt5_isolation_bp
+from src.api.mt5_isolation_routes import mt5_isolation_bp
 app.register_blueprint(mt5_isolation_bp)
 
 # JWT error handlers

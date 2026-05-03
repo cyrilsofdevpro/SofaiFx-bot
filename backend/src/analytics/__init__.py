@@ -1,4 +1,4 @@
 # Analytics module
-from src.dashboard import PerformanceDashboard
+from src.analytics.dashboard import PerformanceDashboard
 
 __all__ = ['PerformanceDashboard']

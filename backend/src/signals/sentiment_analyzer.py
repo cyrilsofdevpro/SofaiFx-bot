@@ -27,7 +27,7 @@ class SentimentAnalyzer:
         
         # Initialize Hugging Face service
         try:
-            from src.huggingface_service import HuggingFaceService
+            from src.signals.huggingface_service import HuggingFaceService
             self.hf_service = HuggingFaceService()
             logger.info("📊 Sentiment Analyzer initialized (with HuggingFace)")
         except Exception as e:

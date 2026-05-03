@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from src.config import config
 from src.utils.logger import logger
-from src.data_cache import data_cache
+from src.data.data_cache import data_cache
 
 # Custom exceptions
 class APIRateLimitError(Exception):

@@ -1,5 +1,5 @@
 import pandas as pd
-from src.base_strategy import BaseStrategy, TradeSignal, Signal
+from src.strategies.base_strategy import BaseStrategy, TradeSignal, Signal
 from src.config import config
 from src.utils.logger import logger
 

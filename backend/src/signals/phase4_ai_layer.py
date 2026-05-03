@@ -26,9 +26,9 @@ class Phase4AILayer:
     
     def __init__(self):
         """Initialize Phase 4 with all AI modules"""
-        from src.sentiment_analyzer import SentimentAnalyzer
-        from src.pattern_recognizer import PatternRecognizer
-        from src.news_filter import NewsFilter
+        from src.signals.sentiment_analyzer import SentimentAnalyzer
+        from src.signals.pattern_recognizer import PatternRecognizer
+        from src.signals.news_filter import NewsFilter
         
         self.sentiment = SentimentAnalyzer()
         self.patterns = PatternRecognizer()
