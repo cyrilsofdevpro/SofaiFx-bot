@@ -12,9 +12,9 @@ from src.config import config
 from src.utils.logger import logger
 from src.models import init_db, db, User, Signal, UserPreference
 from src.mongo_auth import init_mongo_db, seed_admin
-from src.auth import auth_bp
-from src.admin import admin_bp
-from src.execution import execution_bp
+from src.api.auth import auth_bp
+from src.api.admin import admin_bp
+from src.api.execution import execution_bp
 from src.recommendations import recommendation_engine
 from src.scheduler import scheduler
 from src.services.mt5_account import MT5AccountService
