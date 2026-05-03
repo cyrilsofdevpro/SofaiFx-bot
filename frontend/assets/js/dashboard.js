@@ -1,5 +1,5 @@
 // Configuration
-const API_BASE_URL = APIConfig.baseUrl;
+const API_BASE_URL = APIConfig.getBaseUrl();
 let allSignals = [];
 let signalsChart = null;
 let confidenceChart = null;
@@ -442,11 +442,19 @@ async function clearSignals() {
 // Load configuration
 async function loadConfig() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/config`);
+        const response = await fetch(APIConfig.buildUrl('/api/config'));
+        if (!response.ok) {
+            throw new Error(`Config endpoint returned ${response.status}`);
+        }
         const config = await response.json();
         
-        const pairsList = config.currency_pairs.join(', ');
-        document.getElementById('monitored-pairs').textContent = pairsList;
+        // Handle case where currency_pairs might be undefined
+        if (config && config.currency_pairs && Array.isArray(config.currency_pairs)) {
+            const pairsList = config.currency_pairs.join(', ');
+            document.getElementById('monitored-pairs').textContent = pairsList;
+        } else {
+            document.getElementById('monitored-pairs').textContent = 'No pairs configured';
+        }
         
     } catch (error) {
         console.error('Load config error:', error);
@@ -460,7 +468,7 @@ async function updateServerStatus() {
         // Use minimal health endpoint with caching
         const health = await dataOptimizer.getCachedOrFetch('health', async () => {
             // Use minimal endpoint that requires no auth
-            const response = await fetch(`${API_BASE_URL}/api/health/minimal`);
+            const response = await fetch(APIConfig.buildUrl('/api/health/minimal'));
             if (!response.ok) throw new Error(`Status: ${response.status}`);
             return await response.json();
         }, 60000);  // Cache for 60 seconds

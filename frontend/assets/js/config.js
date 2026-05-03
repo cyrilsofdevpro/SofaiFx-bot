@@ -67,6 +67,10 @@ const APIConfig = {
      * Build full API URL
      */
     buildUrl(endpoint) {
+        // Lazy initialization - get baseUrl if not set yet
+        if (!this.baseUrl) {
+            this.baseUrl = this.getBaseUrl();
+        }
         const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
         return url;
     },
