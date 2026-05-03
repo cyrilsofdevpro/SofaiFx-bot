@@ -73,8 +73,9 @@ logger.info(f'JWT Secret Key configured: {jwt_secret[:20]}...')
 # Initialize extensions
 init_db(app)
 try:
-    init_mongo_db(app)
-    seed_admin()
+    with app.app_context():
+        init_mongo_db(app)
+        seed_admin()
     print("✅ Mongo initialized")
 except Exception as e:
     print("❌ Mongo init failed:", e)
