@@ -314,9 +314,18 @@ const AuthSystem = {
         sessionStorage.removeItem('user_switch_shown');
         
         localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('token_expiry');
         localStorage.removeItem('auth_user');
         localStorage.removeItem('last_user_email');
         localStorage.removeItem('user_switch_shown');
+        
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('token_expiry');
+        sessionStorage.removeItem('auth_user');
+        sessionStorage.removeItem('last_user_email');
+        sessionStorage.removeItem('user_switch_shown');
         
         // Clear UI
         const userInfo = document.getElementById('user-info');
@@ -327,6 +336,16 @@ const AuthSystem = {
         if (userName) userName.textContent = '';
         if (userInfoMobile) userInfoMobile.classList.add('hidden');
         if (userNameMobile) userNameMobile.textContent = '';
+        
+        // Reset login fields so the next login attempt is fresh
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        if (loginEmail) loginEmail.value = '';
+        if (loginPassword) loginPassword.value = '';
+        
+        if (typeof JWTInterceptor !== 'undefined' && JWTInterceptor.clearTokens) {
+            JWTInterceptor.clearTokens();
+        }
         
         console.log('🗑️ This tab\'s session cleared (other tabs unaffected)');
         this.updateAuthButtons();
