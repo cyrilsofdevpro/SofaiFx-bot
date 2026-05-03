@@ -33,18 +33,38 @@ async function analyzeSymbol(symbol) {
 
         if (response.ok) {
             const data = await response.json();
-            showNotification(`✅ ${symbol} analyzed: ${data.signal} (${data.confidence}%)`, 'success');
+            console.log(`✅ ${symbol} analyzed: ${data.signal} (${data.confidence}%)`);
+            
+            // Show notification if available
+            if (typeof showNotification === 'function') {
+                showNotification(`✅ ${symbol} analyzed: ${data.signal} (${data.confidence}%)`, 'success');
+            }
+            
+            // Refresh signals immediately after analysis
+            if (typeof loadSignals === 'function') {
+                console.log('🔄 Refreshing signals after analysis...');
+                // Clear signals cache to force fresh data
+                if (typeof dataOptimizer !== 'undefined' && dataOptimizer.clearCache) {
+                    dataOptimizer.clearCache('signals');
+                }
+                setTimeout(() => loadSignals(), 500);
+            }
             
             // Refresh recommendations
             if (typeof recommendationsManager !== 'undefined') {
                 setTimeout(() => recommendationsManager.refresh(), 500);
             }
         } else {
-            showNotification('Failed to analyze symbol', 'error');
+            console.error('Failed to analyze symbol');
+            if (typeof showNotification === 'function') {
+                showNotification('Failed to analyze symbol', 'error');
+            }
         }
     } catch (error) {
         console.error('Error analyzing symbol:', error);
-        showNotification('Error analyzing symbol', 'error');
+        if (typeof showNotification === 'function') {
+            showNotification('Error analyzing symbol', 'error');
+        }
     } finally {
         if (event?.target) {
             event.target.disabled = false;
