@@ -15,9 +15,7 @@ def register_feature_blueprints(app):
     
     Example:
         from flask import Flask
-        from backend.src.api.routes_integration import register_feature_blueprints
-        
-        app = Flask(__name__)
+        from src.api.routes_integration import register_feature_blueprints
         register_feature_blueprints(app)
     
     Args:

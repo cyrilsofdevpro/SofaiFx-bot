@@ -72,12 +72,14 @@ logger.info(f'JWT Secret Key configured: {jwt_secret[:20]}...')
 
 # Initialize extensions
 init_db(app)
-init_mongo_db(app)
+try:
+    init_mongo_db(app)
+    seed_admin()
+    print("✅ Mongo initialized")
+except Exception as e:
+    print("❌ Mongo init failed:", e)
+
 jwt = JWTManager(app)
-
-
-# Seed admin user
-seed_admin()
 
 # CORS Configuration - Allow all origins for mobile/testing
 # In production, restrict to specific frontend domains
