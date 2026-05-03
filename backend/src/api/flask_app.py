@@ -85,12 +85,7 @@ def bootstrap_admin_from_env():
             logger.info('Admin bootstrap skipped: ADMIN_EMAIL or ADMIN_PASSWORD not configured')
             return
 
-        existing_admin = User.query.filter_by(is_admin=True).first()
         existing_user = User.query.filter_by(email=admin_email).first()
-
-        if existing_admin:
-            logger.info(f'Admin bootstrap not required: existing admin found ({existing_admin.email})')
-            return
 
         if existing_user:
             existing_user.is_admin = True
