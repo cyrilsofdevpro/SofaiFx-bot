@@ -269,6 +269,34 @@ def refresh():
         return jsonify({'error': str(e)}), 500
 
 
+@auth_bp.route('/fix-admin-status', methods=['POST'])
+def fix_admin_status():
+    """Temporary endpoint to fix admin status for existing admin user."""
+    # Only allow if the admin email matches the configured one
+    admin_email = config.ADMIN_EMAIL.strip().lower()
+    if not admin_email:
+        return jsonify({'error': 'Admin email not configured'}), 400
+
+    user = User.query.filter_by(email=admin_email).first()
+    if not user:
+        return jsonify({'error': f'Admin user {admin_email} not found'}), 404
+
+    # Promote to admin
+    user.is_admin = True
+    user.is_active = True
+    user.plan = 'enterprise'  # Ensure enterprise plan for admin
+    db.session.commit()
+
+    logger.info(f'Fixed admin status for user: {admin_email}')
+    return jsonify({
+        'message': f'Promoted {admin_email} to admin',
+        'email': user.email,
+        'is_admin': user.is_admin,
+        'is_active': user.is_active,
+        'plan': user.plan
+    }), 200
+
+
 @auth_bp.route('/bootstrap-admin', methods=['POST'])
 def bootstrap_admin():
     """Create or promote an admin user using a protected bootstrap secret."""
