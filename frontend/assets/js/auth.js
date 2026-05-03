@@ -8,6 +8,18 @@
  * - Production-ready: uses same origin as frontend
  */
 
+function getAuthToken() {
+    try {
+        if (typeof AuthSystem !== 'undefined' && AuthSystem.token) {
+            return AuthSystem.token;
+        }
+        return sessionStorage.getItem('access_token') || localStorage.getItem('access_token') || null;
+    } catch (error) {
+        console.warn('getAuthToken fallback failed:', error);
+        return null;
+    }
+}
+
 const AuthSystem = {
     // Get API base URL - MUST use APIConfig
     _getApiUrl() {
