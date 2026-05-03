@@ -26,7 +26,7 @@ const MT5ConnectionManager = {
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 console.log(`📡 Attempting to load MT5 servers (attempt ${attempt}/${retries})...`);
-                const response = await fetch(APIConfig.buildUrl('/api/mt5/servers'), {
+                const response = await fetch('http://localhost:5000/api/mt5/servers', {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -159,7 +159,7 @@ const MT5ConnectionManager = {
             this.isConnecting = true;
             this.updateUI('connecting');
             
-            const token = (typeof getAuthToken === 'function' ? getAuthToken() : (typeof AuthSystem !== 'undefined' ? AuthSystem.token : null));
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 throw new Error('Not authenticated');
             }
@@ -167,7 +167,7 @@ const MT5ConnectionManager = {
             console.log(`🔌 Storing MT5 credentials for user...`);
 
             // FIRST: Store credentials (encrypted in DB per user)
-            const storeResponse = await fetch(APIConfig.buildUrl('/api/mt5/credentials/store'), {
+            const storeResponse = await fetch('http://localhost:5000/api/mt5/credentials/store', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -182,19 +182,14 @@ const MT5ConnectionManager = {
 
             const storeData = await storeResponse.json();
 
-            if (!storeResponse.ok || !storeData.success) {
-                console.error('❌ Credential store failed:', storeData);
-                throw new Error(storeData.error || storeData.message || 'Failed to store credentials');
+            if (!storeData.success) {
+                throw new Error(storeData.error || 'Failed to store credentials');
             }
 
             console.log('✅ Credentials stored securely');
-            
-            // Wait a moment for database transaction to complete
-            await new Promise(resolve => setTimeout(resolve, 500));
 
             // SECOND: Connect using stored credentials (isolated per user)
-            console.log('🔗 Attempting to connect with stored credentials...');
-            const response = await fetch(APIConfig.buildUrl('/api/mt5/connect'), {
+            const response = await fetch('http://localhost:5000/api/mt5/connect', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -224,12 +219,7 @@ const MT5ConnectionManager = {
                 setTimeout(() => this.checkConnectionStatus(), 1000);
             } else {
                 console.error('❌ Connection failed:', data);
-                // Build detailed error message
-                let errorMsg = data.message || data.error || 'Connection failed';
-                if (data.requirement) errorMsg += '\n\n⚠️ ' + data.requirement;
-                if (data.hint) errorMsg += '\n💡 ' + data.hint;
-                if (data.details) errorMsg += '\n\nDetails: ' + data.details;
-                this.showError(errorMsg);
+                this.showError(`Connection failed: ${data.error}\n${data.details || ''}`);
                 this.updateUI('disconnected');
             }
         } catch (error) {
@@ -257,14 +247,14 @@ const MT5ConnectionManager = {
      */
     async disconnect() {
         try {
-            const token = getAuthToken();
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 throw new Error('Not authenticated');
             }
             
             console.log('🔌 Disconnecting from MT5...');
             
-            const response = await fetch(APIConfig.buildUrl('/api/mt5/disconnect'), {
+            const response = await fetch('http://localhost:5000/api/mt5/disconnect', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -294,10 +284,10 @@ const MT5ConnectionManager = {
      */
     async checkConnectionStatus() {
         try {
-            const token = getAuthToken();
+            const token = localStorage.getItem('access_token');
             if (!token) return;
             
-            const response = await fetch(APIConfig.buildUrl('/api/mt5/connection-status'), {
+            const response = await fetch('http://localhost:5000/api/mt5/connection-status', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

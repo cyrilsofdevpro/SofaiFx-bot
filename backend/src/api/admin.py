@@ -1,13 +1,13 @@
 """
 Admin Dashboard API routes for SofAi FX
 Requires admin role for all endpoints
+MongoDB version for persistent storage
 """
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy import func
 from datetime import datetime, timedelta
-from ..models import db, User, Signal
+from ..models_mongo import User, Signal
 from ..utils.logger import logger
 from ..config import config
 
@@ -21,17 +21,17 @@ def require_admin(f):
     @wraps(f)
     @jwt_required()
     def decorated_function(*args, **kwargs):
-        user_id = int(get_jwt_identity())
-        user = User.query.get(user_id)
-        
+        user_id = get_jwt_identity()
+        user = User.objects(id=user_id).first()
+
         if not user or not user.is_admin:
             logger.warning(f'Unauthorized admin access attempt by user {user_id}')
             return jsonify({'error': 'Admin access required'}), 403
-        
+
         # Update last active
         user.last_active = datetime.utcnow()
-        db.session.commit()
-        
+        user.save()
+
         return f(*args, **kwargs)
     
     return decorated_function
@@ -44,34 +44,35 @@ def get_overview_stats():
     """Get main overview statistics"""
     try:
         # Current stats
-        total_users = User.query.count()
-        active_users_24h = User.query.filter(
-            User.last_active >= datetime.utcnow() - timedelta(hours=24)
+        total_users = User.objects.count()
+        active_users_24h = User.objects(
+            last_active__gte=datetime.utcnow() - timedelta(hours=24)
         ).count()
-        total_signals = Signal.query.count()
-        
+        total_signals = Signal.objects.count()
+
         # Signals today
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        signals_today = Signal.query.filter(
-            Signal.created_at >= today_start
+        signals_today = Signal.objects(
+            created_at__gte=today_start
         ).count()
-        
+
         # Signal breakdown today
-        buy_signals_today = Signal.query.filter(
-            Signal.created_at >= today_start,
-            Signal.signal_type == 'BUY'
+        buy_signals_today = Signal.objects(
+            created_at__gte=today_start,
+            signal_type='BUY'
         ).count()
-        sell_signals_today = Signal.query.filter(
-            Signal.created_at >= today_start,
-            Signal.signal_type == 'SELL'
+        sell_signals_today = Signal.objects(
+            created_at__gte=today_start,
+            signal_type='SELL'
         ).count()
-        
-        # Average confidence today
-        avg_confidence_today = db.session.query(
-            func.avg(Signal.confidence)
-        ).filter(
-            Signal.created_at >= today_start
-        ).scalar() or 0
+
+        # Average confidence today (MongoDB aggregation)
+        pipeline = [
+            {"$match": {"created_at": {"$gte": today_start}}},
+            {"$group": {"_id": None, "avg_confidence": {"$avg": "$confidence"}}}
+        ]
+        result = list(Signal.objects.aggregate(pipeline))
+        avg_confidence_today = result[0]['avg_confidence'] if result else 0
         
         # API Status (mock - can integrate with real checks)
         api_status = {

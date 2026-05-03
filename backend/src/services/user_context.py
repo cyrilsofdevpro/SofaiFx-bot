@@ -8,9 +8,10 @@ Ensures complete user isolation in all operations
 from functools import wraps
 from flask import request, jsonify, g
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
-from ..models import db, User
+from ..models_mongo import User
 from ..utils.logger import logger
 import logging
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -49,13 +50,13 @@ class UserContext:
         # Method 2: Try API key from query params or header
         api_key = request.args.get('apikey') or request.headers.get('X-API-Key')
         if api_key:
-            user = User.query.filter_by(api_key=api_key).first()
+            user = User.objects(api_key=api_key).first()
             if user:
                 logger.debug(f"User identified via API key: {user.id}")
                 # Update last used timestamp
-                user.api_key_last_used = db.func.now()
-                db.session.commit()
-                return user.id
+                user.api_key_last_used = datetime.utcnow()
+                user.save()
+                return str(user.id)
         
         return None
     
@@ -69,7 +70,7 @@ class UserContext:
         """
         user_id = UserContext.get_current_user_id()
         if user_id:
-            return User.query.get(user_id)
+            return User.objects(id=user_id).first()
         return None
     
     @staticmethod
@@ -96,7 +97,7 @@ class UserContext:
             
             # Store in Flask's g object for use in endpoint
             g.current_user_id = user_id
-            g.current_user = User.query.get(user_id)
+            g.current_user = User.objects(id=user_id).first()
             
             return f(*args, **kwargs)
         

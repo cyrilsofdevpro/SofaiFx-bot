@@ -1,11 +1,12 @@
 """
 Authentication routes for user registration, login, and token management
+MongoDB version for persistent storage
 """
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from datetime import timedelta
-from ..models import db, User
+from datetime import timedelta, datetime
+from ..models_mongo import User, seed_admin
 from ..config import config
 from ..utils.logger import logger
 
@@ -16,66 +17,64 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 def register():
     """
     Register a new user
-    
+
     Request body:
     {
         "name": "John Doe",
         "email": "user@example.com",
         "password": "securepassword123"
     }
-    
+
     Returns: JWT token on success
     """
     try:
         data = request.get_json()
-        
+
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        
+
         name = data.get('name', '').strip()
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
-        
+
         # Validation
         if not name or not email or not password:
             return jsonify({'error': 'Name, email and password required'}), 400
-        
+
         if len(name) < 2:
             return jsonify({'error': 'Name must be at least 2 characters'}), 400
-        
+
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
-        
+
         if '@' not in email:
             return jsonify({'error': 'Invalid email format'}), 400
-        
+
         # Check if user exists
-        existing_user = User.query.filter_by(email=email).first()
+        existing_user = User.objects(email=email).first()
         if existing_user:
             return jsonify({'error': 'Email already registered'}), 409
-        
+
         # Create new user
         user = User(name=name, email=email, plan='free')
         user.set_password(password)
-        
-        db.session.add(user)
-        db.session.commit()
-        
+        user.save()
+
         # Generate token (valid for 30 days, identity must be a string)
         access_token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(days=30)
         )
-        
+
         # Generate refresh token (valid for 90 days)
         refresh_token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(days=90),
             fresh=False
         )
-        
+
         logger.info(f'New user registered: {name} ({email})')
-        
+
         return jsonify({
             'message': 'Registration successful',
             'user': user.to_dict(),
@@ -83,9 +82,8 @@ def register():
             'refresh_token': refresh_token,
             'expires_in': 30 * 24 * 60 * 60  # 30 days in seconds
         }), 201
-        
+
     except Exception as e:
-        db.session.rollback()
         logger.error(f'Registration error: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
@@ -116,12 +114,12 @@ def login():
             return jsonify({'error': 'Email and password required'}), 400
         
         # Find user
-        user = User.query.filter_by(email=email).first()
-        
+        user = User.objects(email=email).first()
+
         if not user or not user.check_password(password):
             logger.warning(f'Failed login attempt for: {email}')
             return jsonify({'error': 'Invalid email or password'}), 401
-        
+
         if not user.is_active:
             return jsonify({'error': 'Account is inactive'}), 403
 
@@ -136,8 +134,12 @@ def login():
                 user.plan = 'enterprise'
                 updated = True
             if updated:
-                db.session.commit()
+                user.save()
                 logger.info(f'Promoted admin login user {email} to admin during login')
+
+        # Update last active
+        user.last_active = datetime.utcnow()
+        user.save()
         
         # Generate token (valid for 30 days, identity must be a string)
         access_token = create_access_token(

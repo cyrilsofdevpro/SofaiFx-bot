@@ -47,6 +47,9 @@ class Config:
     ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'Admin1234')
     ADMIN_NAME = os.getenv('ADMIN_NAME', 'Cyril Admin')
     ADMIN_BOOTSTRAP_SECRET = os.getenv('ADMIN_BOOTSTRAP_SECRET', '')
+
+    # MongoDB Configuration
+    MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/sofaifx')
     
     # Credential Encryption
     # Master key for encrypting/decrypting user credentials (especially MT5 passwords)

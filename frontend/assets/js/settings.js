@@ -21,10 +21,10 @@ class SettingsManager {
      */
     async loadPreferences() {
         try {
-            const token = getAuthToken();
+            const token = localStorage.getItem('access_token');
             if (!token) return;
 
-            const response = await fetch(APIConfig.buildUrl('/api/preferences'), {
+            const response = await fetch('http://localhost:5000/api/preferences', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -45,9 +45,9 @@ class SettingsManager {
      * Save preferences to API
      */
     async savePreferences() {
-        this.isSaving = false;
+        this.isSaving = true;
         try {
-            const token = getAuthToken();
+            const token = localStorage.getItem('access_token');
             if (!token) return;
 
             // Get current values from form
@@ -60,7 +60,7 @@ class SettingsManager {
             const alert_on_high_confidence = document.getElementById('alert-toggle')?.checked || false;
             const alert_high_confidence_threshold = parseFloat(document.getElementById('alert-threshold')?.value || 0.8);
 
-            const response = await fetch(APIConfig.buildUrl('/api/preferences'), {
+            const response = await fetch('http://localhost:5000/api/preferences', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

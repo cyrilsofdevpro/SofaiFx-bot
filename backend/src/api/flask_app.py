@@ -10,7 +10,7 @@ from ..notifications.email_notifier import EmailNotifier
 from ..risk.risk_manager import risk_manager
 from ..config import config
 from ..utils.logger import logger
-from ..models import init_db, db, User, Signal, UserPreference, Trade, ExecutionLog
+from ..models_mongo import init_mongo_db, seed_admin
 from .auth import auth_bp
 from .admin import admin_bp
 from .execution import execution_bp
@@ -70,49 +70,12 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 60 * 60 * 24 * 30  # 30 days
 logger.info(f'JWT Secret Key configured: {jwt_secret[:20]}...')
 
 # Initialize extensions
-init_db(app)
+init_mongo_db(app)
 jwt = JWTManager(app)
 
 
-def bootstrap_admin_from_env():
-    """Create or promote a default admin user from environment variables."""
-    try:
-        admin_email = config.ADMIN_EMAIL.strip().lower()
-        admin_password = config.ADMIN_PASSWORD
-        admin_name = config.ADMIN_NAME.strip() if config.ADMIN_NAME else 'Cyril Admin'
-
-        if not admin_email or not admin_password:
-            logger.info('Admin bootstrap skipped: ADMIN_EMAIL or ADMIN_PASSWORD not configured')
-            return
-
-        existing_user = User.query.filter_by(email=admin_email).first()
-
-        if existing_user:
-            existing_user.is_admin = True
-            existing_user.is_active = True
-            if not existing_user.check_password(admin_password):
-                existing_user.set_password(admin_password)
-                logger.info(f'Admin bootstrap updated password for existing user {admin_email}')
-            db.session.commit()
-            logger.info(f'Admin bootstrap promoted existing user {admin_email} to admin')
-            return
-
-        new_user = User(
-            name=admin_name,
-            email=admin_email,
-            plan='enterprise',
-            is_admin=True,
-            is_active=True
-        )
-        new_user.set_password(admin_password)
-        db.session.add(new_user)
-        db.session.commit()
-        logger.info(f'Admin bootstrap created admin user: {admin_email}')
-    except Exception as e:
-        logger.error(f'Admin bootstrap failed: {e}', exc_info=True)
-
-
-bootstrap_admin_from_env()
+# Seed admin user
+seed_admin()
 
 # CORS Configuration - Allow all origins for mobile/testing
 # In production, restrict to specific frontend domains
@@ -213,11 +176,11 @@ def diagnostics():
         db_file_size = os.path.getsize(db_path) if db_file_exists else 0
         
         # Get total counts from database
-        total_users = User.query.count()
-        total_signals = Signal.query.count()
-        
+        total_users = User.objects.count()
+        total_signals = Signal.objects.count()
+
         # List all signals in database
-        all_signals = Signal.query.all()
+        all_signals = Signal.objects.all()
         signals_by_user = {}
         for sig in all_signals:
             if sig.user_id not in signals_by_user:

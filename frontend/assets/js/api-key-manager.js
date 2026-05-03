@@ -18,8 +18,8 @@ class APIKeyManager {
             console.log('🔄 API Key Manager starting...');
             console.log('📦 localStorage keys:', Object.keys(localStorage));
             
-            // Check if user is authenticated with tab-isolated auth
-            const token = getAuthToken();
+            // Check if user is authenticated (try both key names for compatibility)
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
             console.log('🔑 Token found:', !!token);
             console.log('🔑 Token value (first 20 chars):', token ? token.substring(0, 20) + '...' : 'null');
             
@@ -120,16 +120,17 @@ class APIKeyManager {
      */
     async loadUserInfo() {
         try {
-            const token = getAuthToken();
+            // Try both key names for compatibility
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
             if (!token) {
                 throw new Error('Authentication token not found in session');
             }
 
             console.log('📡 Fetching user info from API...');
-            console.log('🌐 URL:', APIConfig.buildUrl('/api/user'));
+            console.log('🌐 URL: http://localhost:5000/api/user');
             console.log('🔐 Token:', token.substring(0, 20) + '...');
             
-            const response = await fetch(APIConfig.buildUrl('/api/user'), {
+            const response = await fetch('http://localhost:5000/api/user', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -370,12 +371,12 @@ class APIKeyManager {
         
         this.isSaving = true;
         try {
-            const token = getAuthToken();
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 throw new Error('No authentication token');
             }
 
-            const response = await fetch(APIConfig.buildUrl('/api/user/api-key/regenerate'), {
+            const response = await fetch('http://localhost:5000/api/user/api-key/regenerate', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -424,7 +425,8 @@ let apiKeyManagerInstance = null;
 let lastTokenState = null;
 
 function initializeAPIKeyManager() {
-    const token = getAuthToken();
+    // Try both key names for compatibility
+    const token = sessionStorage.getItem('access_token') || sessionStorage.getItem('auth_token');
     
     console.log('🔑 API Key Manager init - User authenticated:', !!token);
     
@@ -438,7 +440,8 @@ function initializeAPIKeyManager() {
 // Watch for token changes (detects login/logout)
 function watchForTokenChanges() {
     setInterval(() => {
-        const token = getAuthToken();
+        // Try both key names for compatibility
+        const token = sessionStorage.getItem('access_token') || sessionStorage.getItem('auth_token');
         const currentTokenState = !!token;
         
         if (currentTokenState !== lastTokenState) {

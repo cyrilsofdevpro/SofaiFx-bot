@@ -4,51 +4,11 @@
  */
 
 /**
- * Get the current auth token for this tab.
- * Uses AuthSystem if available, otherwise falls back to sessionStorage/localStorage.
- */
-function getAuthToken() {
-    if (typeof AuthSystem !== 'undefined') {
-        return AuthSystem.token;
-    }
-    try {
-        sessionStorage.setItem('__auth_test__', '1');
-        sessionStorage.removeItem('__auth_test__');
-        const token = sessionStorage.getItem('access_token');
-        return token || null;
-    } catch (error) {
-        // sessionStorage unavailable, fallback to localStorage for compatibility
-        return localStorage.getItem('access_token') || null;
-    }
-}
-
-/**
- * Get the current authenticated user for this tab.
- */
-function getAuthUser() {
-    if (typeof AuthSystem !== 'undefined') {
-        return AuthSystem.user;
-    }
-    try {
-        sessionStorage.setItem('__auth_test__', '1');
-        sessionStorage.removeItem('__auth_test__');
-        const userStr = sessionStorage.getItem('auth_user');
-        return userStr ? JSON.parse(userStr) : null;
-    } catch (error) {
-        return JSON.parse(localStorage.getItem('auth_user') || 'null');
-    }
-}
-
-// Expose helpers globally for other scripts that may load before utils.js
-window.getAuthToken = getAuthToken;
-window.getAuthUser = getAuthUser;
-
-/**
  * Analyze a specific currency pair
  */
 async function analyzeSymbol(symbol) {
     try {
-        const token = getAuthToken();
+        const token = localStorage.getItem('access_token');
         if (!token) {
             alert('Please login to analyze');
             return;
@@ -62,7 +22,7 @@ async function analyzeSymbol(symbol) {
             btn.disabled = true;
         }
 
-        const response = await fetch(APIConfig.buildUrl('/api/analyze'), {
+        const response = await fetch('http://localhost:5000/api/analyze', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -73,38 +33,18 @@ async function analyzeSymbol(symbol) {
 
         if (response.ok) {
             const data = await response.json();
-            console.log(`✅ ${symbol} analyzed: ${data.signal} (${data.confidence}%)`);
-            
-            // Show notification if available
-            if (typeof showNotification === 'function') {
-                showNotification(`✅ ${symbol} analyzed: ${data.signal} (${data.confidence}%)`, 'success');
-            }
-            
-            // Refresh signals immediately after analysis
-            if (typeof loadSignals === 'function') {
-                console.log('🔄 Refreshing signals after analysis...');
-                // Clear signals cache to force fresh data
-                if (typeof dataOptimizer !== 'undefined' && dataOptimizer.clearCache) {
-                    dataOptimizer.clearCache('signals');
-                }
-                setTimeout(() => loadSignals(), 500);
-            }
+            showNotification(`✅ ${symbol} analyzed: ${data.signal} (${data.confidence}%)`, 'success');
             
             // Refresh recommendations
             if (typeof recommendationsManager !== 'undefined') {
                 setTimeout(() => recommendationsManager.refresh(), 500);
             }
         } else {
-            console.error('Failed to analyze symbol');
-            if (typeof showNotification === 'function') {
-                showNotification('Failed to analyze symbol', 'error');
-            }
+            showNotification('Failed to analyze symbol', 'error');
         }
     } catch (error) {
         console.error('Error analyzing symbol:', error);
-        if (typeof showNotification === 'function') {
-            showNotification('Error analyzing symbol', 'error');
-        }
+        showNotification('Error analyzing symbol', 'error');
     } finally {
         if (event?.target) {
             event.target.disabled = false;
@@ -118,9 +58,11 @@ async function analyzeSymbol(symbol) {
  */
 async function addToMonitored(symbol) {
     try {
-        const token = getAuthToken();
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
         // Get current monitored pairs
-        const response = await fetch(APIConfig.buildUrl('/api/preferences'), {
+        const response = await fetch('http://localhost:5000/api/preferences', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -142,7 +84,7 @@ async function addToMonitored(symbol) {
             const updatedPairs = [...currentPairs, symbol];
 
             // Save updated preferences
-            const updateResponse = await fetch(APIConfig.buildUrl('/api/preferences'), {
+            const updateResponse = await fetch('http://localhost:5000/api/preferences', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -317,7 +259,7 @@ function parseJWT(token) {
  * Get current user ID from token
  */
 function getCurrentUserId() {
-    const token = getAuthToken();
+    const token = localStorage.getItem('access_token');
     if (!token) return null;
     const payload = parseJWT(token);
     return payload?.sub || payload?.user_id || null;
@@ -327,7 +269,7 @@ function getCurrentUserId() {
  * Check if user is authenticated
  */
 function isAuthenticated() {
-    return !!getAuthToken();
+    return !!localStorage.getItem('access_token');
 }
 
 /**
@@ -339,7 +281,6 @@ function handleAPIError(error, context = '') {
     if (error.message.includes('401')) {
         showNotification('Session expired. Please login again.', 'warning');
         sessionStorage.removeItem('access_token');
-        localStorage.removeItem('access_token');
         setTimeout(() => location.reload(), 2000);
     } else if (error.message.includes('403')) {
         showNotification('You do not have permission for this action.', 'error');
