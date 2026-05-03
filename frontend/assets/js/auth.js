@@ -417,11 +417,12 @@ const AuthSystem = {
         }
         const adminBtn = document.getElementById('admin-btn');
         const adminBtnMobile = document.getElementById('admin-btn-mobile');
+        const isAdmin = isLoggedIn && this.user && this.user.is_admin;
         if (adminBtn) {
-            adminBtn.classList.toggle('hidden', !isLoggedIn);
+            adminBtn.classList.toggle('hidden', !isAdmin);
         }
         if (adminBtnMobile) {
-            adminBtnMobile.classList.toggle('hidden', !isLoggedIn);
+            adminBtnMobile.classList.toggle('hidden', !isAdmin);
         }
 
         if (userInfo && !isLoggedIn) {

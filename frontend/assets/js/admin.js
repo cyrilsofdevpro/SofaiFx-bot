@@ -8,12 +8,11 @@ let charts = {};
 
 // ===== HELPER FUNCTION =====
 function getAuthToken() {
-    if (typeof window.getAuthToken === 'function') {
-        return window.getAuthToken();
-    }
     try {
-        const token = sessionStorage.getItem('access_token');
-        return token || null;
+        if (typeof AuthSystem !== 'undefined' && AuthSystem.token) {
+            return AuthSystem.token;
+        }
+        return sessionStorage.getItem('access_token') || null;
     } catch (error) {
         return null;
     }
