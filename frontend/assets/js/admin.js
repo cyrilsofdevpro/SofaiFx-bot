@@ -2,7 +2,7 @@
 // SofAi FX Admin Dashboard JavaScript
 // ============================================
 
-const API_BASE = APIConfig.baseUrl;
+let API_BASE = window.location.origin;
 let currentTab = 'overview';
 let charts = {};
 
@@ -25,6 +25,14 @@ function toggleSidebar() {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+    if (typeof APIConfig !== 'undefined' && APIConfig.baseUrl) {
+        API_BASE = APIConfig.baseUrl;
+        console.log('[ADMIN] Using API_BASE from APIConfig:', API_BASE);
+    } else {
+        API_BASE = window.location.origin;
+        console.warn('[ADMIN] APIConfig is not defined; using window.location.origin as API base URL:', API_BASE);
+    }
+
     checkAdminAuth();
     loadAdminInfo();
     refreshData();
