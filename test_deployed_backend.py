@@ -63,5 +63,26 @@ def main():
     print(f"   Status: {status}")
     print(f"   Response: {body}\n")
 
+    # Test fix-admin-status endpoint
+    print("4. Testing /auth/fix-admin-status endpoint:")
+    status, body = test_endpoint(f"{base_url}/auth/fix-admin-status", 'POST')
+    print(f"   Status: {status}")
+    print(f"   Response: {body}\n")
+
+    # Test login again after fix
+    print("5. Testing /auth/login again after admin fix:")
+    status, body = test_endpoint(f"{base_url}/auth/login", 'POST', login_data)
+    print(f"   Status: {status}")
+    # Parse response to check if user is now admin
+    try:
+        response_data = json.loads(body)
+        if 'user' in response_data and response_data['user'].get('is_admin'):
+            print("   ✓ User is now admin!")
+        else:
+            print("   ✗ User is still not admin")
+    except:
+        print("   Could not parse response")
+    print(f"   Response: {body}\n")
+
 if __name__ == '__main__':
     main()
