@@ -225,10 +225,8 @@ async function analyze(symbol = null, analyzeAll = false) {
                     showNotification(`✅ Signal for ${symbol}: ${data.signal.signal}`, 'success');
                     allSignals.unshift(data.signal);
                     
-                    // Show risk management data if available
-                    if (data.risk_management) {
-                        displayRiskManagement(symbol, data.signal, data.risk_management);
-                    }
+                    // Show detailed signal popup/modal for the user
+                    displaySignalPopup(symbol, data.signal, data.risk_management || null);
                 } else {
                     showNotification(`⚠️ No clear signal for ${symbol}`, 'warning');
                 }
@@ -844,6 +842,7 @@ function displayRiskManagement(symbol, signal, risk) {
                     <p class="text-gray-400 text-xs mt-2">Confidence: <strong>${(signal.confidence * 100).toFixed(1)}%</strong></p>
                 </div>
                 
+                ${risk ? `
                 <!-- Entry & Exit Points -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-slate-700 rounded-lg p-4 border border-slate-600">
@@ -907,15 +906,21 @@ function displayRiskManagement(symbol, signal, risk) {
                     <p class="text-2xl font-bold text-orange-400">${risk.atr.toFixed(6)}</p>
                     <p class="text-xs text-gray-500 mt-1">Current market volatility used for SL/TP calculations</p>
                 </div>
+                ` : `<div class="bg-slate-700 rounded-lg p-4 border border-slate-600">
+                    <h3 class="font-semibold text-lg">Signal Details</h3>
+                    <p class="text-gray-300">${signal.reason}</p>
+                    <p class="text-gray-400 text-xs mt-2">Confidence: <strong>${(signal.confidence * 100).toFixed(1)}%</strong></p>
+                    <p class="mt-4 text-sm text-gray-400">Risk management details are unavailable for this signal.</p>
+                </div>`}
             </div>
             
             <div class="bg-slate-700 px-6 py-4 border-t border-slate-600 flex gap-3">
                 <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg transition">
                     Close
                 </button>
-                <button onclick="copyToClipboard('${symbol}|${risk.entry_price.toFixed(5)}|${risk.stop_loss.toFixed(5)}|${risk.take_profit.toFixed(5)}')" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition">
+                ${risk ? `<button onclick="copyToClipboard('${symbol}|${risk.entry_price.toFixed(5)}|${risk.stop_loss.toFixed(5)}|${risk.take_profit.toFixed(5)}')" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition">
                     Copy Details
-                </button>
+                </button>` : ''}
             </div>
         </div>
     `;
