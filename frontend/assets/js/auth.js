@@ -243,6 +243,12 @@ const AuthSystem = {
         if (typeof showNotification === 'function') {
             showNotification('✅ Logged out', 'success');
         }
+        
+        // Also clear JWTInterceptor tokens
+        if (typeof JWTInterceptor !== 'undefined' && JWTInterceptor.clearTokens) {
+            JWTInterceptor.clearTokens();
+        }
+        
         setTimeout(() => location.reload(), 500);
     },
     
@@ -258,6 +264,12 @@ const AuthSystem = {
         this.clearAuth();
         sessionStorage.removeItem('last_user_email');
         sessionStorage.removeItem('user_switch_shown');
+        
+        // Also clear JWTInterceptor tokens
+        if (typeof JWTInterceptor !== 'undefined' && JWTInterceptor.clearTokens) {
+            JWTInterceptor.clearTokens();
+        }
+        
         if (typeof showNotification === 'function') {
             showNotification('Account switch initiated. Please log in with a different account.', 'info');
         }
@@ -572,10 +584,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const authModal = document.getElementById('auth-modal');
         
         // Check sessionStorage for THIS TAB's session (not shared with other tabs)
-        const sessionToken = sessionStorage.getItem('access_token');
-        const sessionUser = sessionStorage.getItem('auth_user');
+        let sessionToken = sessionStorage.getItem('access_token');
+        let sessionUser = sessionStorage.getItem('auth_user');
         console.log('🔍 This tab - Token:', sessionToken ? 'exists (tab-isolated)' : 'null');
         console.log('🔍 This tab - User:', sessionUser ? 'exists (tab-isolated)' : 'null');
+        
+        // If no session token, check if JWTInterceptor has valid tokens (from previous login)
+        if (!sessionToken && typeof JWTInterceptor !== 'undefined') {
+            const jwtToken = JWTInterceptor.getToken();
+            if (jwtToken && !JWTInterceptor.isTokenExpired()) {
+                console.log('🔄 Found valid JWT token, restoring session...');
+                
+                // Try to validate the JWT token with backend
+                try {
+                    const apiUrl = AuthSystem._getApiUrl();
+                    const response = await fetch(`${apiUrl}/auth/verify`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${jwtToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.user) {
+                            console.log('✅ JWT token validated, restoring user session');
+                            // Restore the session with the validated user
+                            AuthSystem.setAuth(jwtToken, data.user);
+                            sessionToken = jwtToken;
+                            sessionUser = JSON.stringify(data.user);
+                        }
+                    } else {
+                        console.warn('⚠️ JWT token invalid, clearing...');
+                        JWTInterceptor.clearTokens();
+                    }
+                } catch (error) {
+                    console.error('❌ Error validating JWT token:', error);
+                    JWTInterceptor.clearTokens();
+                }
+            }
+        }
         
         if (AuthSystem.isAuthenticated()) {
             console.log('✅ Session found in this tab, validating with backend...');
