@@ -379,6 +379,235 @@ def get_user_signals():
 
 
 # ============================================================
+# SIGNAL ANALYSIS ENDPOINTS
+# ============================================================
+
+@mt5_isolation_bp.route('/analyze', methods=['POST'])
+@UserContext.require_auth
+def analyze_symbol():
+    """
+    Analyze a specific symbol and generate signal.
+    
+    Request JSON:
+    {
+        "symbol": "EURUSD",
+        "notify": true
+    }
+    
+    Returns: Signal analysis result
+    """
+    try:
+        user_id = g.current_user_id
+        data = request.get_json() or {}
+        
+        symbol = data.get('symbol', '').strip().upper()
+        notify = data.get('notify', True)
+        
+        if not symbol:
+            return jsonify({'error': 'Symbol is required'}), 400
+        
+        if len(symbol) != 6:
+            return jsonify({'error': 'Symbol must be 6 characters (e.g., EURUSD)'}), 400
+        
+        log_with_user('info', f'Analyzing symbol: {symbol}', user_id)
+        
+        # Import signal generator here to avoid circular imports
+        from ..signals.signal_generator import SignalGenerator
+        from ..data.alpha_vantage import alpha_vantage
+        
+        # Get market data
+        try:
+            df = alpha_vantage.get_data(symbol, period='1D', limit=100)
+            if df is None or df.empty:
+                return jsonify({'error': f'No market data available for {symbol}'}), 404
+        except Exception as e:
+            logger.error(f'Error fetching data for {symbol}: {e}')
+            return jsonify({'error': f'Failed to fetch market data for {symbol}'}), 500
+        
+        # Generate signal
+        generator = SignalGenerator()
+        signal = generator.generate_signal(df, symbol)
+        
+        if signal:
+            # Save signal to database
+            db_signal = Signal(
+                user_id=user_id,
+                symbol=symbol,
+                signal_type=signal.signal,
+                price=signal.price,
+                confidence=signal.confidence,
+                indicators=signal.indicators,
+                ai_prediction=signal.ai_prediction,
+                filters_applied=signal.filters_applied
+            )
+            db.session.add(db_signal)
+            db.session.commit()
+            
+            result = {
+                'success': True,
+                'symbol': symbol,
+                'signal': signal.signal,
+                'price': signal.price,
+                'confidence': signal.confidence,
+                'indicators': signal.indicators,
+                'ai_prediction': signal.ai_prediction,
+                'filters_applied': signal.filters_applied,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            
+            # Send notification if requested
+            if notify:
+                try:
+                    from ..notifications.telegram_notifier import TelegramNotifier
+                    notifier = TelegramNotifier()
+                    notifier.send_signal_notification(user_id, result)
+                except Exception as e:
+                    logger.warning(f'Failed to send notification: {e}')
+            
+            log_with_user('info', f'Generated signal for {symbol}: {signal.signal} ({signal.confidence:.1f}%)', user_id)
+            return jsonify(result), 200
+        else:
+            return jsonify({
+                'success': False,
+                'symbol': symbol,
+                'message': 'No clear signal generated',
+                'timestamp': datetime.utcnow().isoformat()
+            }), 200
+    
+    except Exception as e:
+        logger.error(f'[USER {g.current_user_id}] Error analyzing symbol: {e}', exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@mt5_isolation_bp.route('/analyze-all', methods=['POST'])
+@UserContext.require_auth
+def analyze_all_symbols():
+    """
+    Analyze all configured currency pairs.
+    
+    Request JSON:
+    {
+        "pairs": ["EURUSD", "GBPUSD", "USDJPY"],  // optional, uses default if not provided
+        "notify": true
+    }
+    
+    Returns: Analysis results for all pairs
+    """
+    try:
+        user_id = g.current_user_id
+        data = request.get_json() or {}
+        
+        pairs = data.get('pairs', config.CURRENCY_PAIRS)
+        notify = data.get('notify', True)
+        
+        if not pairs:
+            return jsonify({'error': 'No pairs to analyze'}), 400
+        
+        log_with_user('info', f'Analyzing {len(pairs)} pairs', user_id)
+        
+        results = []
+        successful = 0
+        
+        # Import here to avoid circular imports
+        from ..signals.signal_generator import SignalGenerator
+        from ..data.alpha_vantage import alpha_vantage
+        
+        generator = SignalGenerator()
+        
+        for symbol in pairs:
+            try:
+                symbol = symbol.strip().upper()
+                if len(symbol) != 6:
+                    results.append({
+                        'symbol': symbol,
+                        'success': False,
+                        'error': 'Invalid symbol format'
+                    })
+                    continue
+                
+                # Get market data
+                df = alpha_vantage.get_data(symbol, period='1D', limit=100)
+                if df is None or df.empty:
+                    results.append({
+                        'symbol': symbol,
+                        'success': False,
+                        'error': 'No market data available'
+                    })
+                    continue
+                
+                # Generate signal
+                signal = generator.generate_signal(df, symbol)
+                
+                if signal:
+                    # Save signal to database
+                    db_signal = Signal(
+                        user_id=user_id,
+                        symbol=symbol,
+                        signal_type=signal.signal,
+                        price=signal.price,
+                        confidence=signal.confidence,
+                        indicators=signal.indicators,
+                        ai_prediction=signal.ai_prediction,
+                        filters_applied=signal.filters_applied
+                    )
+                    db.session.add(db_signal)
+                    db.session.commit()
+                    
+                    result = {
+                        'symbol': symbol,
+                        'success': True,
+                        'signal': signal.signal,
+                        'price': signal.price,
+                        'confidence': signal.confidence,
+                        'indicators': signal.indicators,
+                        'ai_prediction': signal.ai_prediction,
+                        'filters_applied': signal.filters_applied
+                    }
+                    results.append(result)
+                    successful += 1
+                    
+                    # Send notification if requested
+                    if notify:
+                        try:
+                            from ..notifications.telegram_notifier import TelegramNotifier
+                            notifier = TelegramNotifier()
+                            notifier.send_signal_notification(user_id, result)
+                        except Exception as e:
+                            logger.warning(f'Failed to send notification for {symbol}: {e}')
+                else:
+                    results.append({
+                        'symbol': symbol,
+                        'success': False,
+                        'message': 'No clear signal generated'
+                    })
+                    
+            except Exception as e:
+                logger.error(f'Error analyzing {symbol}: {e}')
+                results.append({
+                    'symbol': symbol,
+                    'success': False,
+                    'error': str(e)
+                })
+        
+        db.session.commit()  # Final commit for all signals
+        
+        response = {
+            'success': True,
+            'total_pairs': len(pairs),
+            'successful_analyses': successful,
+            'results': results,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        
+        log_with_user('info', f'Completed analysis of {len(pairs)} pairs, {successful} successful', user_id)
+        return jsonify(response), 200
+    
+    except Exception as e:
+        logger.error(f'[USER {g.current_user_id}] Error analyzing all symbols: {e}', exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================
 # ISOLATED TRADE EXECUTION
 # ============================================================
 

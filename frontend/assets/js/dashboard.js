@@ -167,7 +167,24 @@ async function analyze(symbol = null, analyzeAll = false) {
         console.log('📨 Response status:', response.status);
         console.log('📨 Response headers:', Array.from(response.headers.entries()));
         
-        const data = await response.json();
+        // Check if response is JSON before parsing
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('❌ JSON parse error:', jsonError);
+                showNotification('❌ Server returned invalid response format', 'error');
+                return;
+            }
+        } else {
+            // Handle non-JSON responses (like HTML error pages)
+            const textResponse = await response.text();
+            console.error('❌ Non-JSON response:', textResponse.substring(0, 200));
+            showNotification(`❌ Server error (${response.status}): ${response.statusText}`, 'error');
+            return;
+        }
         
         // Log response data
         console.log('📊 Response data:', data);
