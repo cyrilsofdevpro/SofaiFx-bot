@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from datetime import timedelta
 from ..models import db, User
+from ..config import config
 from ..utils.logger import logger
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -257,17 +258,59 @@ def refresh():
         )
         
         logger.info(f'Token refreshed for user: {user.name}')
-        
         return jsonify({
-            'message': 'Token refreshed successfully',
+            'message': 'Refresh successful',
             'access_token': new_access_token,
             'refresh_token': new_refresh_token,
-            'expires_in': 30 * 24 * 60 * 60  # 30 days in seconds
+            'expires_in': 30 * 24 * 60 * 60
         }), 200
-        
     except Exception as e:
-        logger.error(f'Token refresh error: {str(e)}')
-        return jsonify({'error': 'Token refresh failed'}), 500
+        logger.error(f'Refresh error: {str(e)}')
+        return jsonify({'error': str(e)}), 500
+
+
+@auth_bp.route('/bootstrap-admin', methods=['POST'])
+def bootstrap_admin():
+    """Create or promote an admin user using a protected bootstrap secret."""
+    if not config.ADMIN_BOOTSTRAP_SECRET:
+        return jsonify({'error': 'Admin bootstrap secret is not configured'}), 403
+
+    data = request.get_json() or {}
+    provided_secret = data.get('bootstrap_secret') or request.headers.get('X-Bootstrap-Secret')
+    if not provided_secret or provided_secret != config.ADMIN_BOOTSTRAP_SECRET:
+        logger.warning('Unauthorized admin bootstrap attempt')
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    email = data.get('email', config.ADMIN_EMAIL).strip().lower()
+    password = data.get('password', config.ADMIN_PASSWORD)
+    name = data.get('name', config.ADMIN_NAME) or 'Admin User'
+
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if user:
+        user.is_admin = True
+        user.is_active = True
+        if not user.check_password(password):
+            user.set_password(password)
+            logger.info('Admin bootstrap updated existing user password')
+        db.session.commit()
+        message = f"Promoted existing user '{user.email}' to admin."
+    else:
+        user = User(name=name, email=email, plan='enterprise', is_admin=True, is_active=True)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        message = f"Created admin user '{user.email}'."
+
+    logger.info(message)
+    return jsonify({
+        'message': message,
+        'email': user.email,
+        'is_admin': user.is_admin,
+        'is_active': user.is_active
+    }), 200
 
 
 @auth_bp.route('/change-password', methods=['POST'])

@@ -41,6 +41,12 @@ class Config:
     # JWT Authentication
     # CRITICAL: This secret key MUST be consistent. Change only in production with valid .env file
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'sofai-fx-secret-key-change-in-production')
+
+    # Admin bootstrap settings
+    ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'cyriladmin@gmail.com')
+    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'Admin1234')
+    ADMIN_NAME = os.getenv('ADMIN_NAME', 'Cyril Admin')
+    ADMIN_BOOTSTRAP_SECRET = os.getenv('ADMIN_BOOTSTRAP_SECRET', '')
     
     # Credential Encryption
     # Master key for encrypting/decrypting user credentials (especially MT5 passwords)

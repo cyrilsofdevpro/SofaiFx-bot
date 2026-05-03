@@ -73,6 +73,52 @@ logger.info(f'JWT Secret Key configured: {jwt_secret[:20]}...')
 init_db(app)
 jwt = JWTManager(app)
 
+
+def bootstrap_admin_from_env():
+    """Create or promote a default admin user from environment variables."""
+    try:
+        admin_email = config.ADMIN_EMAIL.strip().lower()
+        admin_password = config.ADMIN_PASSWORD
+        admin_name = config.ADMIN_NAME.strip() if config.ADMIN_NAME else 'Cyril Admin'
+
+        if not admin_email or not admin_password:
+            logger.info('Admin bootstrap skipped: ADMIN_EMAIL or ADMIN_PASSWORD not configured')
+            return
+
+        existing_admin = User.query.filter_by(is_admin=True).first()
+        existing_user = User.query.filter_by(email=admin_email).first()
+
+        if existing_admin:
+            logger.info(f'Admin bootstrap not required: existing admin found ({existing_admin.email})')
+            return
+
+        if existing_user:
+            existing_user.is_admin = True
+            existing_user.is_active = True
+            if not existing_user.check_password(admin_password):
+                existing_user.set_password(admin_password)
+                logger.info(f'Admin bootstrap updated password for existing user {admin_email}')
+            db.session.commit()
+            logger.info(f'Admin bootstrap promoted existing user {admin_email} to admin')
+            return
+
+        new_user = User(
+            name=admin_name,
+            email=admin_email,
+            plan='enterprise',
+            is_admin=True,
+            is_active=True
+        )
+        new_user.set_password(admin_password)
+        db.session.add(new_user)
+        db.session.commit()
+        logger.info(f'Admin bootstrap created admin user: {admin_email}')
+    except Exception as e:
+        logger.error(f'Admin bootstrap failed: {e}', exc_info=True)
+
+
+bootstrap_admin_from_env()
+
 # CORS Configuration - Allow all origins for mobile/testing
 # In production, restrict to specific frontend domains
 cors_config = {
