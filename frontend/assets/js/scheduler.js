@@ -15,7 +15,7 @@ class SchedulerManager {
      */
     async startAutoAnalysis() {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) return;
 
             // Get monitored pairs from settings
@@ -61,7 +61,7 @@ class SchedulerManager {
      */
     async stopAutoAnalysis() {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) return;
 
             const response = await fetch(APIConfig.buildUrl('/api/auto-analysis/stop'), {
@@ -115,7 +115,7 @@ class SchedulerManager {
      */
     async getJobStatus() {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) return;
 
             const response = await fetch(APIConfig.buildUrl('/api/auto-analysis/status'), {

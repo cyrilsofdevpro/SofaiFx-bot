@@ -21,7 +21,7 @@ class SettingsManager {
      */
     async loadPreferences() {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) return;
 
             const response = await fetch(APIConfig.buildUrl('/api/preferences'), {
@@ -45,9 +45,9 @@ class SettingsManager {
      * Save preferences to API
      */
     async savePreferences() {
-        this.isSaving = true;
+        this.isSaving = false;
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) return;
 
             // Get current values from form

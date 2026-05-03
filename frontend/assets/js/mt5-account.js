@@ -26,7 +26,7 @@ const MT5AccountManager = {
      */
     async loadAccountData() {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) {
                 console.warn('⚠️ No auth token - skipping MT5 account load');
                 this.displayDisconnected('Please login first');
@@ -256,7 +256,7 @@ const MT5AccountManager = {
         }
         
         this.refreshInterval = setInterval(() => {
-            if (this.autoRefreshEnabled && localStorage.getItem('access_token')) {
+            if (this.autoRefreshEnabled && getAuthToken()) {
                 this.loadAccountData();
             }
         }, this.refreshRate);

@@ -13,7 +13,7 @@ class RecommendationsManager {
      * Fetch recommendations from API
      */
     async fetchRecommendations(hours = 24) {
-        const token = localStorage.getItem('access_token');
+        const token = getAuthToken();
         if (!token) {
             console.debug('User not authenticated, features will load after login');
             return;
@@ -199,7 +199,7 @@ const recommendationsManager = new RecommendationsManager();
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         // Load immediately if already authenticated
-        if (localStorage.getItem('access_token')) {
+        if (getAuthToken()) {
             recommendationsManager.fetchRecommendations();
         }
         // Refresh every 5 minutes

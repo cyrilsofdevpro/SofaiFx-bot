@@ -4,11 +4,51 @@
  */
 
 /**
+ * Get the current auth token for this tab.
+ * Uses AuthSystem if available, otherwise falls back to sessionStorage/localStorage.
+ */
+function getAuthToken() {
+    if (typeof AuthSystem !== 'undefined') {
+        return AuthSystem.token;
+    }
+    try {
+        sessionStorage.setItem('__auth_test__', '1');
+        sessionStorage.removeItem('__auth_test__');
+        const token = sessionStorage.getItem('access_token');
+        return token || null;
+    } catch (error) {
+        // sessionStorage unavailable, fallback to localStorage for compatibility
+        return localStorage.getItem('access_token') || null;
+    }
+}
+
+/**
+ * Get the current authenticated user for this tab.
+ */
+function getAuthUser() {
+    if (typeof AuthSystem !== 'undefined') {
+        return AuthSystem.user;
+    }
+    try {
+        sessionStorage.setItem('__auth_test__', '1');
+        sessionStorage.removeItem('__auth_test__');
+        const userStr = sessionStorage.getItem('auth_user');
+        return userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+        return JSON.parse(localStorage.getItem('auth_user') || 'null');
+    }
+}
+
+// Expose helpers globally for other scripts that may load before utils.js
+window.getAuthToken = getAuthToken;
+window.getAuthUser = getAuthUser;
+
+/**
  * Analyze a specific currency pair
  */
 async function analyzeSymbol(symbol) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = getAuthToken();
         if (!token) {
             alert('Please login to analyze');
             return;
@@ -78,9 +118,7 @@ async function analyzeSymbol(symbol) {
  */
 async function addToMonitored(symbol) {
     try {
-        const token = localStorage.getItem('access_token');
-        if (!token) return;
-
+        const token = getAuthToken();
         // Get current monitored pairs
         const response = await fetch(APIConfig.buildUrl('/api/preferences'), {
             method: 'GET',
@@ -279,7 +317,7 @@ function parseJWT(token) {
  * Get current user ID from token
  */
 function getCurrentUserId() {
-    const token = localStorage.getItem('access_token');
+    const token = getAuthToken();
     if (!token) return null;
     const payload = parseJWT(token);
     return payload?.sub || payload?.user_id || null;
@@ -289,7 +327,7 @@ function getCurrentUserId() {
  * Check if user is authenticated
  */
 function isAuthenticated() {
-    return !!localStorage.getItem('access_token');
+    return !!getAuthToken();
 }
 
 /**
@@ -300,6 +338,7 @@ function handleAPIError(error, context = '') {
     
     if (error.message.includes('401')) {
         showNotification('Session expired. Please login again.', 'warning');
+        sessionStorage.removeItem('access_token');
         localStorage.removeItem('access_token');
         setTimeout(() => location.reload(), 2000);
     } else if (error.message.includes('403')) {

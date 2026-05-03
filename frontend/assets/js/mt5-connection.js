@@ -159,7 +159,7 @@ const MT5ConnectionManager = {
             this.isConnecting = true;
             this.updateUI('connecting');
             
-            const token = localStorage.getItem('access_token');
+            const token = (typeof getAuthToken === 'function' ? getAuthToken() : (typeof AuthSystem !== 'undefined' ? AuthSystem.token : null));
             if (!token) {
                 throw new Error('Not authenticated');
             }
@@ -257,7 +257,7 @@ const MT5ConnectionManager = {
      */
     async disconnect() {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) {
                 throw new Error('Not authenticated');
             }
@@ -294,7 +294,7 @@ const MT5ConnectionManager = {
      */
     async checkConnectionStatus() {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) return;
             
             const response = await fetch(APIConfig.buildUrl('/api/mt5/connection-status'), {

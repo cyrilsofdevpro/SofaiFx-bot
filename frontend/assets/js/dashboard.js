@@ -146,11 +146,11 @@ async function analyze(symbol = null, analyzeAll = false) {
         const payload = analyzeAll ? { pairs: [] } : { symbol, notify: true };
         
         console.log('🔄 Analyzing:', endpoint, payload);
-        console.log('📦 Token available:', !!sessionStorage.getItem('access_token'));
-        console.log('📦 Token value:', sessionStorage.getItem('access_token')?.substring(0, 30) + '...');
+        const token = getAuthToken();
+        console.log('📦 Token available:', !!token);
+        console.log('📦 Token value:', token?.substring(0, 30) + '...');
         
         // Get token and build headers
-        const token = sessionStorage.getItem('access_token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
@@ -269,7 +269,7 @@ async function loadSignals() {
         
         // Use cache with lightweight endpoint
         const signals = await dataOptimizer.getCachedOrFetch('signals', async () => {
-            const token = sessionStorage.getItem('access_token');
+            const token = getAuthToken();
             const limit = 20;  // Fetch only latest 20 instead of 50
             
             const headers = { 'Content-Type': 'application/json' };
@@ -335,7 +335,7 @@ async function loadSignals() {
 // Load signal breakdown (buy/sell counts per user)
 async function loadSignalBreakdown() {
     try {
-        const token = sessionStorage.getItem('access_token');
+        const token = getAuthToken();
         if (!token) {
             console.log('⚠️ No token for signal breakdown');
             return;
@@ -372,7 +372,7 @@ async function loadSignalBreakdown() {
 
 // Load open positions and update display
 async function loadOpenPositions() {
-    const token = sessionStorage.getItem('access_token');
+    const token = getAuthToken();
     if (!token) return;
     
     try {
@@ -434,7 +434,7 @@ async function clearSignals() {
     try {
         console.log('🗑️ Clearing all signals...');
         
-        const token = sessionStorage.getItem('access_token');
+        const token = getAuthToken();
         if (!token) {
             showNotification('❌ Please log in first', 'error');
             return;
@@ -635,7 +635,7 @@ function updateSignalsDisplay() {
 async function updateStatsFromCache() {
     try {
         const stats = await dataOptimizer.getCachedOrFetch('stats', async () => {
-            const token = sessionStorage.getItem('access_token');
+            const token = getAuthToken();
             const headers = { 'Content-Type': 'application/json' };
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
@@ -1343,7 +1343,7 @@ function goToAdmin() {
 async function toggleTradingBot() {
     const btn = document.getElementById('trading-bot-btn');
     const statusEl = document.getElementById('bot-status');
-    const token = sessionStorage.getItem('access_token');
+    const token = getAuthToken();
     
     if (!token) {
         alert('Please log in first');
@@ -1416,7 +1416,7 @@ async function toggleTradingBot() {
 async function checkBotStatus() {
     const btn = document.getElementById('trading-bot-btn');
     const statusEl = document.getElementById('bot-status');
-    const token = sessionStorage.getItem('access_token');
+    const token = getAuthToken();
     
     if (!token || !btn) return;
     

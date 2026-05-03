@@ -18,8 +18,8 @@ class APIKeyManager {
             console.log('🔄 API Key Manager starting...');
             console.log('📦 localStorage keys:', Object.keys(localStorage));
             
-            // Check if user is authenticated (try both key names for compatibility)
-            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+            // Check if user is authenticated with tab-isolated auth
+            const token = getAuthToken();
             console.log('🔑 Token found:', !!token);
             console.log('🔑 Token value (first 20 chars):', token ? token.substring(0, 20) + '...' : 'null');
             
@@ -120,8 +120,7 @@ class APIKeyManager {
      */
     async loadUserInfo() {
         try {
-            // Try both key names for compatibility
-            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+            const token = getAuthToken();
             if (!token) {
                 throw new Error('Authentication token not found in session');
             }
@@ -371,7 +370,7 @@ class APIKeyManager {
         
         this.isSaving = true;
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getAuthToken();
             if (!token) {
                 throw new Error('No authentication token');
             }
@@ -425,8 +424,7 @@ let apiKeyManagerInstance = null;
 let lastTokenState = null;
 
 function initializeAPIKeyManager() {
-    // Try both key names for compatibility
-    const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+    const token = getAuthToken();
     
     console.log('🔑 API Key Manager init - User authenticated:', !!token);
     
@@ -440,8 +438,7 @@ function initializeAPIKeyManager() {
 // Watch for token changes (detects login/logout)
 function watchForTokenChanges() {
     setInterval(() => {
-        // Try both key names for compatibility
-        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        const token = getAuthToken();
         const currentTokenState = !!token;
         
         if (currentTokenState !== lastTokenState) {

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load P&L Dashboard data
 async function loadPnLDashboard() {
     try {
-        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        const token = getAuthToken();
         if (!token) {
             console.log('No auth token - P&L dashboard hidden');
             return;
@@ -338,10 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const periodSelect = document.getElementById('pnl-period-select');
     if (periodSelect) {
         periodSelect.addEventListener('change', async function() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
-            if (!token) return;
-            
-            const days = this.value;
+                const token = getAuthToken();
             try {
                 const response = await fetch(`${API_BASE_URL}/api/dashboard/pnl/by-period?days=${days}`, {
                     headers: {

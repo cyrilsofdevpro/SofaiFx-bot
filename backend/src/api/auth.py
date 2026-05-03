@@ -124,6 +124,20 @@ def login():
         
         if not user.is_active:
             return jsonify({'error': 'Account is inactive'}), 403
+
+        # Ensure configured admin email is always promoted to admin
+        admin_email = config.ADMIN_EMAIL.strip().lower() if config.ADMIN_EMAIL else None
+        if admin_email and email == admin_email:
+            updated = False
+            if not user.is_admin:
+                user.is_admin = True
+                updated = True
+            if user.plan != 'enterprise':
+                user.plan = 'enterprise'
+                updated = True
+            if updated:
+                db.session.commit()
+                logger.info(f'Promoted admin login user {email} to admin during login')
         
         # Generate token (valid for 30 days, identity must be a string)
         access_token = create_access_token(

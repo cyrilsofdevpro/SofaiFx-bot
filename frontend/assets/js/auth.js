@@ -26,17 +26,35 @@ const AuthSystem = {
     _authReadyPromise: null,
     _authReadyResolve: null,
     
-    // Storage strategy: check sessionStorage first (per-tab), fallback to localStorage for Edge/Safari
-    // Get token from sessionStorage (per-tab) or localStorage (backup for browsers with limited sessionStorage)
+    // Detect sessionStorage support once and use it for tab-isolated auth
+    _supportsSessionStorage: (() => {
+        try {
+            sessionStorage.setItem('__auth_test__', '1');
+            sessionStorage.removeItem('__auth_test__');
+            return true;
+        } catch (e) {
+            console.warn('⚠️ sessionStorage unavailable:', e.message);
+            return false;
+        }
+    })(),
+
+    // Get token from sessionStorage if supported, otherwise fallback to localStorage
     get token() {
-        return sessionStorage.getItem('access_token') || localStorage.getItem('access_token') || null;
+        const sessionToken = sessionStorage.getItem('access_token');
+        if (this._supportsSessionStorage) {
+            return sessionToken || null;
+        }
+        return sessionToken || localStorage.getItem('access_token') || null;
     },
     
-    // Get user from sessionStorage (per-tab) or localStorage
+    // Get user from sessionStorage if supported, otherwise fallback to localStorage
     get user() {
         try {
-            const userStr = sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user');
-            return JSON.parse(userStr || 'null');
+            const userStr = sessionStorage.getItem('auth_user');
+            if (this._supportsSessionStorage) {
+                return JSON.parse(userStr || 'null');
+            }
+            return JSON.parse(userStr || localStorage.getItem('auth_user') || 'null');
         } catch {
             return null;
         }
@@ -97,7 +115,7 @@ const AuthSystem = {
             
             // Verify token was saved
             setTimeout(() => {
-                const savedToken = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+                const savedToken = (typeof getAuthToken === 'function' ? getAuthToken() : null) || sessionStorage.getItem('access_token');
                 console.log('✅ Token saved:', savedToken ? 'YES' : 'NO');
             }, 100);
             
@@ -305,6 +323,12 @@ const AuthSystem = {
         try {
             sessionStorage.setItem('access_token', token);
             sessionStorage.setItem('auth_user', JSON.stringify(user));
+            sessionStorage.removeItem('refresh_token');
+            sessionStorage.removeItem('token_expiry');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('auth_user');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('token_expiry');
             console.log('💾 Auth saved to sessionStorage');
         } catch (error) {
             console.warn('⚠️ sessionStorage unavailable, falling back to localStorage:', error.message);
@@ -323,6 +347,8 @@ const AuthSystem = {
         // Clear both storages
         sessionStorage.removeItem('access_token');
         sessionStorage.removeItem('auth_user');
+        sessionStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('token_expiry');
         sessionStorage.removeItem('last_user_email');
         sessionStorage.removeItem('user_switch_shown');
         
@@ -332,13 +358,6 @@ const AuthSystem = {
         localStorage.removeItem('auth_user');
         localStorage.removeItem('last_user_email');
         localStorage.removeItem('user_switch_shown');
-        
-        sessionStorage.removeItem('access_token');
-        sessionStorage.removeItem('refresh_token');
-        sessionStorage.removeItem('token_expiry');
-        sessionStorage.removeItem('auth_user');
-        sessionStorage.removeItem('last_user_email');
-        sessionStorage.removeItem('user_switch_shown');
         
         // Clear UI
         const userInfo = document.getElementById('user-info');

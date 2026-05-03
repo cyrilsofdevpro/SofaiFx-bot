@@ -8,8 +8,15 @@ let charts = {};
 
 // ===== HELPER FUNCTION =====
 function getAuthToken() {
-    // Check sessionStorage first, then localStorage (for browser compatibility)
-    return sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
+    if (typeof window.getAuthToken === 'function') {
+        return window.getAuthToken();
+    }
+    try {
+        const token = sessionStorage.getItem('access_token');
+        return token || null;
+    } catch (error) {
+        return null;
+    }
 }
 
 // ===== MOBILE SIDEBAR TOGGLE =====
@@ -43,16 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== AUTHENTICATION CHECK =====
 async function checkAdminAuth() {
-    // Check both sessionStorage (primary) and localStorage (fallback for browser compatibility)
-    let token = sessionStorage.getItem('access_token');
-    let storageType = 'sessionStorage';
-    
-    if (!token) {
-        token = localStorage.getItem('access_token');
-        storageType = 'localStorage';
-    }
-    
-    console.log('[ADMIN] Token from', storageType + ':', token ? 'YES (found)' : 'NO (missing)');
+    const token = getAuthToken();
+    console.log('[ADMIN] Token found:', token ? 'YES' : 'NO');
     
     if (!token) {
         console.log('[ADMIN] No token found - redirecting to login');
@@ -96,10 +95,17 @@ async function checkAdminAuth() {
 
 // ===== LOAD ADMIN INFO =====
 async function loadAdminInfo() {
-    // Check both sessionStorage and localStorage
-    let userStr = sessionStorage.getItem('auth_user');
+    let userStr = null;
+    if (typeof window.getAuthUser === 'function') {
+        const user = window.getAuthUser();
+        userStr = user ? JSON.stringify(user) : null;
+    }
     if (!userStr) {
-        userStr = localStorage.getItem('auth_user');
+        try {
+            userStr = sessionStorage.getItem('auth_user');
+        } catch (error) {
+            userStr = null;
+        }
     }
     
     if (userStr) {

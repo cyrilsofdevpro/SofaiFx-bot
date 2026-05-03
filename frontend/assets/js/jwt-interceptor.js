@@ -31,6 +31,18 @@ const JWTInterceptor = {
     isRefreshing: false,
     refreshSubscribers: [],
 
+    // Detect sessionStorage support for tab-isolated auth sessions
+    _supportsSessionStorage: (() => {
+        try {
+            sessionStorage.setItem('__jwt_test__', '1');
+            sessionStorage.removeItem('__jwt_test__');
+            return true;
+        } catch (e) {
+            console.warn('⚠️ sessionStorage unavailable for JWT interceptor:', e.message);
+            return false;
+        }
+    })(),
+
     /**
      * Initialize interceptor
      * Call this on app startup (before making API calls)
@@ -72,29 +84,33 @@ const JWTInterceptor = {
     },
 
     /**
-     * Get token from storage with fallback
+     * Get token from storage with fallback if sessionStorage is unavailable
      */
     getToken() {
-        return sessionStorage.getItem(this.config.tokenKey) || 
-               localStorage.getItem(this.config.tokenKey) || 
-               null;
+        const sessionToken = sessionStorage.getItem(this.config.tokenKey);
+        if (this._supportsSessionStorage) {
+            return sessionToken || null;
+        }
+        return sessionToken || localStorage.getItem(this.config.tokenKey) || null;
     },
 
     /**
-     * Get refresh token from storage
+     * Get refresh token from storage with fallback if sessionStorage is unavailable
      */
     getRefreshToken() {
-        return sessionStorage.getItem(this.config.refreshTokenKey) || 
-               localStorage.getItem(this.config.refreshTokenKey) || 
-               null;
+        const sessionToken = sessionStorage.getItem(this.config.refreshTokenKey);
+        if (this._supportsSessionStorage) {
+            return sessionToken || null;
+        }
+        return sessionToken || localStorage.getItem(this.config.refreshTokenKey) || null;
     },
 
     /**
      * Check if token is expired
      */
     isTokenExpired() {
-        const expiryStr = sessionStorage.getItem(this.config.tokenExpiryKey) || 
-                          localStorage.getItem(this.config.tokenExpiryKey);
+        const sessionExpiry = sessionStorage.getItem(this.config.tokenExpiryKey);
+        const expiryStr = this._supportsSessionStorage ? sessionExpiry : (sessionExpiry || localStorage.getItem(this.config.tokenExpiryKey));
         
         if (!expiryStr) return false;
         
