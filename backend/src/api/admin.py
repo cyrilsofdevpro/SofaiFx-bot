@@ -7,7 +7,8 @@ MongoDB version for persistent storage
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
-from ..models_mongo import User, Signal
+from sqlalchemy import func
+from ..models import User, Signal, db
 from ..utils.logger import logger
 from ..config import config
 
@@ -22,15 +23,14 @@ def require_admin(f):
     @jwt_required()
     def decorated_function(*args, **kwargs):
         user_id = get_jwt_identity()
-        user = User.objects(id=user_id).first()
+        user = User.query.get(int(user_id)) if user_id else None
 
         if not user or not user.is_admin:
             logger.warning(f'Unauthorized admin access attempt by user {user_id}')
             return jsonify({'error': 'Admin access required'}), 403
 
-        # Update last active
         user.last_active = datetime.utcnow()
-        user.save()
+        db.session.commit()
 
         return f(*args, **kwargs)
     
@@ -43,48 +43,34 @@ def require_admin(f):
 def get_overview_stats():
     """Get main overview statistics"""
     try:
-        # Current stats
-        total_users = User.objects.count()
-        active_users_24h = User.objects(
-            last_active__gte=datetime.utcnow() - timedelta(hours=24)
-        ).count()
-        total_signals = Signal.objects.count()
+        total_users = User.query.count()
+        active_users_24h = User.query.filter(User.last_active >= datetime.utcnow() - timedelta(hours=24)).count()
+        total_signals = Signal.query.count()
 
-        # Signals today
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        signals_today = Signal.objects(
-            created_at__gte=today_start
+        signals_today = Signal.query.filter(Signal.created_at >= today_start).count()
+
+        buy_signals_today = Signal.query.filter(
+            Signal.created_at >= today_start,
+            Signal.signal_type == 'BUY'
+        ).count()
+        sell_signals_today = Signal.query.filter(
+            Signal.created_at >= today_start,
+            Signal.signal_type == 'SELL'
         ).count()
 
-        # Signal breakdown today
-        buy_signals_today = Signal.objects(
-            created_at__gte=today_start,
-            signal_type='BUY'
-        ).count()
-        sell_signals_today = Signal.objects(
-            created_at__gte=today_start,
-            signal_type='SELL'
-        ).count()
+        avg_confidence_today = db.session.query(func.avg(Signal.confidence)).filter(
+            Signal.created_at >= today_start
+        ).scalar() or 0
 
-        # Average confidence today (MongoDB aggregation)
-        pipeline = [
-            {"$match": {"created_at": {"$gte": today_start}}},
-            {"$group": {"_id": None, "avg_confidence": {"$avg": "$confidence"}}}
-        ]
-        result = list(Signal.objects.aggregate(pipeline))
-        avg_confidence_today = result[0]['avg_confidence'] if result else 0
-        
-        # API Status (mock - can integrate with real checks)
         api_status = {
             'twelvedata': 'operational',
             'alpha_vantage': 'operational',
             'telegram': 'operational',
             'email': 'operational'
         }
-        
-        # Scheduler status
-        scheduler_status = 'running'  # Can be enhanced
-        
+        scheduler_status = 'running'
+
         return jsonify({
             'overview': {
                 'total_users': total_users,

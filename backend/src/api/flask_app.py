@@ -10,7 +10,8 @@ from ..notifications.email_notifier import EmailNotifier
 from ..risk.risk_manager import risk_manager
 from ..config import config
 from ..utils.logger import logger
-from ..models_mongo import init_mongo_db, seed_admin
+from ..models import init_db, db, User, Signal, UserPreference
+from ..mongo_auth import init_mongo_db, seed_admin
 from .auth import auth_bp
 from .admin import admin_bp
 from .execution import execution_bp
@@ -70,6 +71,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 60 * 60 * 24 * 30  # 30 days
 logger.info(f'JWT Secret Key configured: {jwt_secret[:20]}...')
 
 # Initialize extensions
+init_db(app)
 init_mongo_db(app)
 jwt = JWTManager(app)
 
@@ -176,11 +178,11 @@ def diagnostics():
         db_file_size = os.path.getsize(db_path) if db_file_exists else 0
         
         # Get total counts from database
-        total_users = User.objects.count()
-        total_signals = Signal.objects.count()
+        total_users = User.query.count()
+        total_signals = Signal.query.count()
 
         # List all signals in database
-        all_signals = Signal.objects.all()
+        all_signals = Signal.query.all()
         signals_by_user = {}
         for sig in all_signals:
             if sig.user_id not in signals_by_user:

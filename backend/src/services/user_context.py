@@ -8,7 +8,7 @@ Ensures complete user isolation in all operations
 from functools import wraps
 from flask import request, jsonify, g
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
-from ..models_mongo import User
+from ..models import User, db
 from ..utils.logger import logger
 import logging
 from datetime import datetime
@@ -37,7 +37,6 @@ class UserContext:
         Returns:
             int: user_id if authenticated, None if not
         """
-        # Method 1: Try JWT from Authorization header
         try:
             verify_jwt_in_request(optional=True)
             jwt_user_id = get_jwt_identity()
@@ -47,16 +46,14 @@ class UserContext:
         except Exception as e:
             logger.debug(f"JWT verification failed: {e}")
         
-        # Method 2: Try API key from query params or header
         api_key = request.args.get('apikey') or request.headers.get('X-API-Key')
         if api_key:
-            user = User.objects(api_key=api_key).first()
+            user = User.query.filter_by(api_key=api_key).first()
             if user:
                 logger.debug(f"User identified via API key: {user.id}")
-                # Update last used timestamp
                 user.api_key_last_used = datetime.utcnow()
-                user.save()
-                return str(user.id)
+                db.session.commit()
+                return user.id
         
         return None
     
@@ -70,7 +67,7 @@ class UserContext:
         """
         user_id = UserContext.get_current_user_id()
         if user_id:
-            return User.objects(id=user_id).first()
+            return User.query.get(user_id)
         return None
     
     @staticmethod
@@ -95,9 +92,8 @@ class UserContext:
                     'message': 'Valid authentication required'
                 }), 401
             
-            # Store in Flask's g object for use in endpoint
             g.current_user_id = user_id
-            g.current_user = User.objects(id=user_id).first()
+            g.current_user = User.query.get(user_id)
             
             return f(*args, **kwargs)
         
@@ -134,11 +130,9 @@ class UserContext:
                     'message': 'Invalid or expired API key'
                 }), 401
             
-            # Update last used
-            user.api_key_last_used = db.func.now()
+            user.api_key_last_used = datetime.utcnow()
             db.session.commit()
             
-            # Store in Flask's g object
             g.current_user_id = user.id
             g.current_user = user
             
@@ -178,13 +172,11 @@ def require_user_isolation(model_class, owner_field='user_id'):
             if not user_id:
                 return jsonify({'error': 'Authentication required'}), 401
             
-            # Get resource ID from kwargs
             resource_id = kwargs.get('id') or kwargs.get(f'{owner_field.replace("_id", "_id")}')
             
             if not resource_id:
                 return jsonify({'error': 'Resource ID required'}), 400
             
-            # Query with user isolation
             resource = model_class.query.filter_by(
                 id=resource_id,
                 **{owner_field: user_id}
@@ -196,7 +188,6 @@ def require_user_isolation(model_class, owner_field='user_id'):
                     'message': 'Resource not found or access denied'
                 }), 404
             
-            # Store in g for endpoint use
             g.resource = resource
             
             return f(*args, **kwargs)

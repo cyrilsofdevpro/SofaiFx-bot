@@ -6,7 +6,16 @@ MongoDB version for persistent storage
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from datetime import timedelta, datetime
-from ..models_mongo import User, seed_admin
+from ..models import db, User
+from ..mongo_auth import (
+    check_password,
+    create_mongo_user,
+    get_mongo_user_by_email,
+    hash_password,
+    sync_mongo_user_to_sql,
+    sync_sql_user_to_mongo,
+    update_mongo_user
+)
 from ..config import config
 from ..utils.logger import logger
 
@@ -50,23 +59,20 @@ def register():
         if '@' not in email:
             return jsonify({'error': 'Invalid email format'}), 400
 
-        # Check if user exists
-        existing_user = User.objects(email=email).first()
-        if existing_user:
+        # Check if user exists in MongoDB or local SQLite
+        mongo_user = get_mongo_user_by_email(email)
+        local_user = User.query.filter_by(email=email).first()
+        if mongo_user or local_user:
             return jsonify({'error': 'Email already registered'}), 409
 
-        # Create new user
-        user = User(name=name, email=email, plan='free')
-        user.set_password(password)
-        user.save()
+        mongo_user = create_mongo_user(name=name, email=email, password=password, plan='free')
+        user = sync_mongo_user_to_sql(mongo_user)
 
-        # Generate token (valid for 30 days, identity must be a string)
         access_token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(days=30)
         )
 
-        # Generate refresh token (valid for 90 days)
         refresh_token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(days=90),
@@ -80,7 +86,7 @@ def register():
             'user': user.to_dict(),
             'access_token': access_token,
             'refresh_token': refresh_token,
-            'expires_in': 30 * 24 * 60 * 60  # 30 days in seconds
+            'expires_in': 30 * 24 * 60 * 60
         }), 201
 
     except Exception as e:
@@ -113,55 +119,60 @@ def login():
         if not email or not password:
             return jsonify({'error': 'Email and password required'}), 400
         
-        # Find user
-        user = User.objects(email=email).first()
+        # Find user in MongoDB first, otherwise fall back to local SQLite migration path
+        mongo_user = get_mongo_user_by_email(email)
+        user = None
 
-        if not user or not user.check_password(password):
-            logger.warning(f'Failed login attempt for: {email}')
-            return jsonify({'error': 'Invalid email or password'}), 401
+        if mongo_user:
+            if not check_password(mongo_user.get('password', ''), password):
+                logger.warning(f'Failed login attempt for: {email}')
+                return jsonify({'error': 'Invalid email or password'}), 401
 
-        if not user.is_active:
-            return jsonify({'error': 'Account is inactive'}), 403
+            if not mongo_user.get('is_active', True):
+                return jsonify({'error': 'Account is inactive'}), 403
 
-        # Ensure configured admin email is always promoted to admin
-        admin_email = config.ADMIN_EMAIL.strip().lower() if config.ADMIN_EMAIL else None
-        if admin_email and email == admin_email:
-            updated = False
-            if not user.is_admin:
-                user.is_admin = True
-                updated = True
-            if user.plan != 'enterprise':
-                user.plan = 'enterprise'
-                updated = True
-            if updated:
-                user.save()
+            # Ensure configured admin email is always promoted to admin
+            admin_email = config.ADMIN_EMAIL.strip().lower() if config.ADMIN_EMAIL else None
+            if admin_email and email == admin_email:
+                mongo_user = update_mongo_user(email, {
+                    'is_admin': True,
+                    'plan': 'enterprise'
+                })
                 logger.info(f'Promoted admin login user {email} to admin during login')
 
-        # Update last active
-        user.last_active = datetime.utcnow()
-        user.save()
-        
-        # Generate token (valid for 30 days, identity must be a string)
+            mongo_user = update_mongo_user(email, {'last_active': datetime.utcnow()})
+            user = sync_mongo_user_to_sql(mongo_user)
+        else:
+            user = User.query.filter_by(email=email).first()
+            if not user or not user.check_password(password):
+                logger.warning(f'Failed login attempt for: {email}')
+                return jsonify({'error': 'Invalid email or password'}), 401
+
+            if not user.is_active:
+                return jsonify({'error': 'Account is inactive'}), 403
+
+            mongo_user = sync_sql_user_to_mongo(user)
+            user = sync_mongo_user_to_sql(mongo_user)
+
         access_token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(days=30)
         )
-        
-        # Generate refresh token (valid for 90 days)
+
         refresh_token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(days=90),
             fresh=False
         )
-        
+
         logger.info(f'User logged in: {user.name} ({email})')
-        
+
         return jsonify({
             'message': 'Login successful',
             'user': user.to_dict(),
             'access_token': access_token,
             'refresh_token': refresh_token,
-            'expires_in': 30 * 24 * 60 * 60  # 30 days in seconds
+            'expires_in': 30 * 24 * 60 * 60
         }), 200
         
     except Exception as e:
@@ -288,7 +299,6 @@ def refresh():
 @auth_bp.route('/fix-admin-status', methods=['POST'])
 def fix_admin_status():
     """Temporary endpoint to fix admin status for existing admin user."""
-    # Only allow if the admin email matches the configured one
     admin_email = config.ADMIN_EMAIL.strip().lower()
     if not admin_email:
         return jsonify({'error': 'Admin email not configured'}), 400
@@ -297,11 +307,11 @@ def fix_admin_status():
     if not user:
         return jsonify({'error': f'Admin user {admin_email} not found'}), 404
 
-    # Promote to admin
     user.is_admin = True
     user.is_active = True
-    user.plan = 'enterprise'  # Ensure enterprise plan for admin
+    user.plan = 'enterprise'
     db.session.commit()
+    sync_sql_user_to_mongo(user)
 
     logger.info(f'Fixed admin status for user: {admin_email}')
     return jsonify({
@@ -339,14 +349,33 @@ def bootstrap_admin():
         if not user.check_password(password):
             user.set_password(password)
             logger.info('Admin bootstrap updated existing user password')
+        user.plan = 'enterprise'
         db.session.commit()
+        sync_sql_user_to_mongo(user)
         message = f"Promoted existing user '{user.email}' to admin."
     else:
-        user = User(name=name, email=email, plan='enterprise', is_admin=True, is_active=True)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        message = f"Created admin user '{user.email}'."
+        mongo_user = get_mongo_user_by_email(email)
+        if mongo_user:
+            mongo_user = update_mongo_user(email, {
+                'name': name,
+                'plan': 'enterprise',
+                'is_admin': True,
+                'is_active': True,
+                'password': hash_password(password)
+            })
+            user = sync_mongo_user_to_sql(mongo_user)
+            message = f"Updated existing Mongo admin '{email}' and synced to SQL."
+        else:
+            mongo_user = create_mongo_user(
+                name=name,
+                email=email,
+                password=password,
+                plan='enterprise',
+                is_admin=True,
+                is_active=True
+            )
+            user = sync_mongo_user_to_sql(mongo_user)
+            message = f"Created admin user '{user.email}'."
 
     logger.info(message)
     return jsonify({
@@ -391,6 +420,7 @@ def change_password():
         
         user.set_password(new_password)
         db.session.commit()
+        sync_sql_user_to_mongo(user)
         
         logger.info(f'Password changed for user: {user.email}')
         
