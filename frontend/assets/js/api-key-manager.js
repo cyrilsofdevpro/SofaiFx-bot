@@ -127,10 +127,10 @@ class APIKeyManager {
             }
 
             console.log('📡 Fetching user info from API...');
-            console.log('🌐 URL: http://localhost:5000/api/user');
+            console.log('🌐 URL:', APIConfig.buildUrl('/api/user'));
             console.log('🔐 Token:', token.substring(0, 20) + '...');
             
-            const response = await fetch('http://localhost:5000/api/user', {
+            const response = await fetch(APIConfig.buildUrl('/api/user'), {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -376,7 +376,7 @@ class APIKeyManager {
                 throw new Error('No authentication token');
             }
 
-            const response = await fetch('http://localhost:5000/api/user/api-key/regenerate', {
+            const response = await fetch(APIConfig.buildUrl('/api/user/api-key/regenerate'), {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

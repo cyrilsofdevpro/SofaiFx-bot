@@ -18,7 +18,7 @@ print("="*80)
 
 # Step 1: Login
 print("\n[1] Logging in as Israel...")
-response = requests.post('http://localhost:5000/auth/login', json={
+response = requests.post('https://sofaifx-bot-v2.onrender.com/auth/login', json={
     'email': 'israel@gmail.com',
     'password': 'israel123'
 })
@@ -33,7 +33,7 @@ print(f"✅ Token: {token[:40]}...")
 # Step 2: Analyze GBPUSD
 print("\n[2] Analyzing GBPUSD...")
 headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'}
-response = requests.post('http://localhost:5000/api/analyze', 
+response = requests.post('https://sofaifx-bot-v2.onrender.com/api/analyze', 
     json={'symbol': 'GBPUSD', 'notify': False}, 
     headers=headers)
 

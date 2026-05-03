@@ -23,7 +23,7 @@ class RecommendationsManager {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/recommendations?hours=${hours}`,
+                APIConfig.buildUrl(`/api/recommendations?hours=${hours}`),
                 {
                     method: 'GET',
                     headers: {

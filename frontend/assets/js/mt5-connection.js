@@ -26,7 +26,7 @@ const MT5ConnectionManager = {
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 console.log(`📡 Attempting to load MT5 servers (attempt ${attempt}/${retries})...`);
-                const response = await fetch('http://localhost:5000/api/mt5/servers', {
+                const response = await fetch(APIConfig.buildUrl('/api/mt5/servers'), {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -167,7 +167,7 @@ const MT5ConnectionManager = {
             console.log(`🔌 Storing MT5 credentials for user...`);
 
             // FIRST: Store credentials (encrypted in DB per user)
-            const storeResponse = await fetch('http://localhost:5000/api/mt5/credentials/store', {
+            const storeResponse = await fetch(APIConfig.buildUrl('/api/mt5/credentials/store'), {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -194,7 +194,7 @@ const MT5ConnectionManager = {
 
             // SECOND: Connect using stored credentials (isolated per user)
             console.log('🔗 Attempting to connect with stored credentials...');
-            const response = await fetch('http://localhost:5000/api/mt5/connect', {
+            const response = await fetch(APIConfig.buildUrl('/api/mt5/connect'), {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -264,7 +264,7 @@ const MT5ConnectionManager = {
             
             console.log('🔌 Disconnecting from MT5...');
             
-            const response = await fetch('http://localhost:5000/api/mt5/disconnect', {
+            const response = await fetch(APIConfig.buildUrl('/api/mt5/disconnect'), {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -297,7 +297,7 @@ const MT5ConnectionManager = {
             const token = localStorage.getItem('access_token');
             if (!token) return;
             
-            const response = await fetch('http://localhost:5000/api/mt5/connection-status', {
+            const response = await fetch(APIConfig.buildUrl('/api/mt5/connection-status'), {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

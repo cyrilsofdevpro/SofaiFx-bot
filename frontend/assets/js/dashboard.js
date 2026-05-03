@@ -1,5 +1,5 @@
 // Configuration
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = APIConfig.baseUrl;
 let allSignals = [];
 let signalsChart = null;
 let confidenceChart = null;

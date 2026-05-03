@@ -36,7 +36,7 @@ const MT5AccountManager = {
             console.log('📡 Fetching MT5 account data (isolated)...');
             
             // Use isolated endpoint
-            const response = await fetch('http://localhost:5000/api/mt5/account', {
+            const response = await fetch(APIConfig.buildUrl('/api/mt5/account'), {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

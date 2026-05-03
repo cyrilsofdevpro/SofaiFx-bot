@@ -29,7 +29,7 @@ class SchedulerManager {
 
             const interval = parseInt(document.getElementById('analysis-interval')?.value || 3600);
 
-            const response = await fetch('http://localhost:5000/api/auto-analysis/start', {
+            const response = await fetch(APIConfig.buildUrl('/api/auto-analysis/start'), {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -64,7 +64,7 @@ class SchedulerManager {
             const token = localStorage.getItem('access_token');
             if (!token) return;
 
-            const response = await fetch('http://localhost:5000/api/auto-analysis/stop', {
+            const response = await fetch(APIConfig.buildUrl('/api/auto-analysis/stop'), {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -118,7 +118,7 @@ class SchedulerManager {
             const token = localStorage.getItem('access_token');
             if (!token) return;
 
-            const response = await fetch('http://localhost:5000/api/auto-analysis/status', {
+            const response = await fetch(APIConfig.buildUrl('/api/auto-analysis/status'), {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

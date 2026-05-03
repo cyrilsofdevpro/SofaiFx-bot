@@ -88,7 +88,7 @@ const MobileNetworkDetector = {
      */
     async checkBackendHealth() {
         try {
-            const apiUrl = typeof APIConfig !== 'undefined' ? APIConfig.baseUrl : 'http://localhost:5000';
+            const apiUrl = APIConfig.baseUrl;
             const healthUrl = `${apiUrl}/health`;
 
             console.log(`🏥 Checking backend health: ${healthUrl}`);

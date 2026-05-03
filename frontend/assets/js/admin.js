@@ -2,7 +2,7 @@
 // SofAi FX Admin Dashboard JavaScript
 // ============================================
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = APIConfig.baseUrl;
 let currentTab = 'overview';
 let charts = {};
 

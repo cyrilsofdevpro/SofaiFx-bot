@@ -22,7 +22,7 @@ async function analyzeSymbol(symbol) {
             btn.disabled = true;
         }
 
-        const response = await fetch('http://localhost:5000/api/analyze', {
+        const response = await fetch(APIConfig.buildUrl('/api/analyze'), {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -62,7 +62,7 @@ async function addToMonitored(symbol) {
         if (!token) return;
 
         // Get current monitored pairs
-        const response = await fetch('http://localhost:5000/api/preferences', {
+        const response = await fetch(APIConfig.buildUrl('/api/preferences'), {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ async function addToMonitored(symbol) {
             const updatedPairs = [...currentPairs, symbol];
 
             // Save updated preferences
-            const updateResponse = await fetch('http://localhost:5000/api/preferences', {
+            const updateResponse = await fetch(APIConfig.buildUrl('/api/preferences'), {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

@@ -371,7 +371,7 @@ const AuthSystem = {
             const token = this.token;
             if (!token) return;
             
-            const response = await fetch('http://localhost:5000/api/user', {
+            const response = await fetch(APIConfig.buildUrl('/api/user'), {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
