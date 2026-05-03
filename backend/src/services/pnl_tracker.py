@@ -8,8 +8,8 @@ Version: 1.0.0
 
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
-from ..models import Trade, db
-from ..utils.logger import logger
+from src.models import Trade, db
+from src.utils.logger import logger
 
 
 class PnLTracker:

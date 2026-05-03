@@ -11,8 +11,8 @@ Version: 2.0.0
 
 import requests
 from datetime import datetime, timedelta
-from ..utils.logger import logger
-from ..config import config
+from src.utils.logger import logger
+from src.config import config
 import json
 
 class SentimentAnalyzer:
@@ -27,7 +27,7 @@ class SentimentAnalyzer:
         
         # Initialize Hugging Face service
         try:
-            from .huggingface_service import HuggingFaceService
+            from src.huggingface_service import HuggingFaceService
             self.hf_service = HuggingFaceService()
             logger.info("📊 Sentiment Analyzer initialized (with HuggingFace)")
         except Exception as e:

@@ -1,6 +1,6 @@
 import pandas as pd
-from .base_strategy import BaseStrategy, TradeSignal, Signal
-from ..utils.logger import logger
+from src.base_strategy import BaseStrategy, TradeSignal, Signal
+from src.utils.logger import logger
 
 class MovingAverageStrategy(BaseStrategy):
     """

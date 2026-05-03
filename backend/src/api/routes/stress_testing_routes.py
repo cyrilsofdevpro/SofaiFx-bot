@@ -5,7 +5,7 @@ Endpoints for system load testing and reliability validation
 from flask import Blueprint, request, jsonify
 import logging
 import threading
-from ...testing.stress_test import StressTestEngine
+from src.testing.stress_test import StressTestEngine
 
 logger = logging.getLogger(__name__)
 stress_bp = Blueprint('stress_testing', __name__, url_prefix='/api/stress-test')

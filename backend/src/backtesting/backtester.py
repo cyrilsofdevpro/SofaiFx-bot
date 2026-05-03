@@ -15,8 +15,8 @@ import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
 import json
-from ..utils.logger import logger
-from ..config import config
+from src.utils.logger import logger
+from src.config import config
 
 class BacktestingEngine:
     """Validates trading strategy using historical data"""

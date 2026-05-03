@@ -1,10 +1,10 @@
-from ..strategies.rsi_strategy import RSIStrategy
-from ..strategies.moving_average import MovingAverageStrategy
-from ..strategies.support_resistance import SupportResistanceStrategy
-from ..strategies.base_strategy import Signal
-from ..utils.logger import logger
-from ..predictions.price_predictor import price_predictor
-from ..filters.smart_filters import smart_filters
+from src.strategies.rsi_strategy import RSIStrategy
+from src.strategies.moving_average import MovingAverageStrategy
+from src.strategies.support_resistance import SupportResistanceStrategy
+from src.strategies.base_strategy import Signal
+from src.utils.logger import logger
+from src.predictions.price_predictor import price_predictor
+from src.filters.smart_filters import smart_filters
 from datetime import datetime
 
 class SignalGenerator:

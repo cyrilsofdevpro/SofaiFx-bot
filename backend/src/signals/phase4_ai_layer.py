@@ -13,8 +13,8 @@ Version: 4.0.0
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from ..utils.logger import logger
-from ..config import config
+from src.utils.logger import logger
+from src.config import config
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -26,9 +26,9 @@ class Phase4AILayer:
     
     def __init__(self):
         """Initialize Phase 4 with all AI modules"""
-        from .sentiment_analyzer import SentimentAnalyzer
-        from .pattern_recognizer import PatternRecognizer
-        from .news_filter import NewsFilter
+        from src.sentiment_analyzer import SentimentAnalyzer
+        from src.pattern_recognizer import PatternRecognizer
+        from src.news_filter import NewsFilter
         
         self.sentiment = SentimentAnalyzer()
         self.patterns = PatternRecognizer()

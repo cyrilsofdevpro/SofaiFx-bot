@@ -3,9 +3,9 @@ import secrets
 from pymongo import MongoClient, errors
 import certifi
 from flask_bcrypt import Bcrypt
-from ..config import config
-from ..models import db, User
-from ..utils.logger import logger
+from src.config import config
+from src.models import db, User
+from src.utils.logger import logger
 
 bcrypt = Bcrypt()
 _mongo_client = None

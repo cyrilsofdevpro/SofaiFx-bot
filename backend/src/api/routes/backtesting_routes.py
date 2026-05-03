@@ -5,7 +5,7 @@ Endpoints for running historical backtests and retrieving results
 from flask import Blueprint, request, jsonify
 import logging
 from datetime import datetime, timedelta
-from ...backtesting.backtester import BacktestingEngine
+from src.backtesting.backtester import BacktestingEngine
 
 logger = logging.getLogger(__name__)
 backtesting_bp = Blueprint('backtesting', __name__, url_prefix='/api/backtesting')

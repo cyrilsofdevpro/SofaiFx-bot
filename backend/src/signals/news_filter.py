@@ -11,8 +11,8 @@ Version: 1.0.0
 
 import requests
 from datetime import datetime, timedelta
-from ..utils.logger import logger
-from ..config import config
+from src.utils.logger import logger
+from src.config import config
 import warnings
 warnings.filterwarnings('ignore')
 

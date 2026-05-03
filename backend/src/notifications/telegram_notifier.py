@@ -1,8 +1,8 @@
 import asyncio
 from telegram import Bot
 from telegram.error import TelegramError
-from ..config import config
-from ..utils.logger import logger
+from src.config import config
+from src.utils.logger import logger
 
 class TelegramNotifier:
     """Send trading signals via Telegram bot"""

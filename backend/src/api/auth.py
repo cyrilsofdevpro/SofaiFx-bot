@@ -6,8 +6,8 @@ MongoDB version for persistent storage
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from datetime import timedelta, datetime
-from ..models import db, User
-from ..mongo_auth import (
+from src.models import db, User
+from src.mongo_auth import (
     check_password,
     create_mongo_user,
     get_mongo_user_by_email,
@@ -16,8 +16,8 @@ from ..mongo_auth import (
     sync_sql_user_to_mongo,
     update_mongo_user
 )
-from ..config import config
-from ..utils.logger import logger
+from src.config import config
+from src.utils.logger import logger
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 

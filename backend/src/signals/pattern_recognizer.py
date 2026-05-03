@@ -12,7 +12,7 @@ Version: 1.0.0
 
 import pandas as pd
 import numpy as np
-from ..utils.logger import logger
+from src.utils.logger import logger
 import warnings
 warnings.filterwarnings('ignore')
 

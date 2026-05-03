@@ -8,8 +8,8 @@ Ensures complete user isolation in all operations
 from functools import wraps
 from flask import request, jsonify, g
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
-from ..models import User, db
-from ..utils.logger import logger
+from src.models import User, db
+from src.utils.logger import logger
 import logging
 from datetime import datetime
 

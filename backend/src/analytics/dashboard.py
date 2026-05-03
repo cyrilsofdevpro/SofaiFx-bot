@@ -12,7 +12,7 @@ Version: 1.0.0
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
-from ..utils.logger import logger
+from src.utils.logger import logger
 
 class PerformanceDashboard:
     """Generates performance analytics and dashboards"""

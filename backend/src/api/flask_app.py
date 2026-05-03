@@ -2,24 +2,24 @@ from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
-from ..data.alpha_vantage import alpha_vantage, APIRateLimitError
-from ..data.twelvedata import TwelveDataClient
+from src.data.alpha_vantage import alpha_vantage, APIRateLimitError
+from src.data.twelvedata import TwelveDataClient
 # NOTE: Signal engines are lazy-loaded to avoid heavy imports at startup
-from ..notifications.telegram_notifier import TelegramNotifier
-from ..notifications.email_notifier import EmailNotifier
-from ..risk.risk_manager import risk_manager
-from ..config import config
-from ..utils.logger import logger
-from ..models import init_db, db, User, Signal, UserPreference
-from ..mongo_auth import init_mongo_db, seed_admin
-from .auth import auth_bp
-from .admin import admin_bp
-from .execution import execution_bp
-from ..recommendations import recommendation_engine
-from ..scheduler import scheduler
-from ..services.mt5_account import MT5AccountService
-from ..services.credential_manager import CredentialEncryptor, MT5CredentialManager
-from ..services.mt5_connection import MT5ConnectionManager
+from src.notifications.telegram_notifier import TelegramNotifier
+from src.notifications.email_notifier import EmailNotifier
+from src.risk.risk_manager import risk_manager
+from src.config import config
+from src.utils.logger import logger
+from src.models import init_db, db, User, Signal, UserPreference
+from src.mongo_auth import init_mongo_db, seed_admin
+from src.auth import auth_bp
+from src.admin import admin_bp
+from src.execution import execution_bp
+from src.recommendations import recommendation_engine
+from src.scheduler import scheduler
+from src.services.mt5_account import MT5AccountService
+from src.services.credential_manager import CredentialEncryptor, MT5CredentialManager
+from src.services.mt5_connection import MT5ConnectionManager
 from datetime import datetime
 import pandas as pd
 import numpy as np
@@ -98,15 +98,15 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(execution_bp)
 
 # Register dashboard blueprint (Phase 5)
-from .dashboard_routes import dashboard_bp
+from src.dashboard_routes import dashboard_bp
 app.register_blueprint(dashboard_bp)
 
 # Register stats blueprint (for frontend compatibility)
-from .stats_routes import stats_bp
+from src.stats_routes import stats_bp
 app.register_blueprint(stats_bp)
 
 # Register MT5 isolation blueprint (Multi-user system)
-from .mt5_isolation_routes import mt5_isolation_bp
+from src.mt5_isolation_routes import mt5_isolation_bp
 app.register_blueprint(mt5_isolation_bp)
 
 # JWT error handlers
@@ -133,7 +133,7 @@ def get_signal_generator():
     """Lazy-load signal generator on first use"""
     global signal_generator
     if signal_generator is None:
-        from ..signals.signal_generator import SignalGenerator
+        from src.signals.signal_generator import SignalGenerator
         signal_generator = SignalGenerator()
         logger.info("✓ SignalGenerator loaded")
     return signal_generator
@@ -142,7 +142,7 @@ def get_phase_router():
     """Lazy-load phase router on first use"""
     global phase_router
     if phase_router is None:
-        from ..signals.phase_router import PhaseRouter
+        from src.signals.phase_router import PhaseRouter
         phase_router = PhaseRouter()
         logger.info("✓ PhaseRouter loaded")
     return phase_router
@@ -1402,7 +1402,7 @@ def scan_all_pairs():
         db.session.commit()
         
         # Initialize scanner and scan all pairs
-        from ..signals.multi_pair_scanner import MultiPairScanner
+        from src.signals.multi_pair_scanner import MultiPairScanner
         scanner = MultiPairScanner()
         
         result = scanner.scan_all(api_key)

@@ -1,4 +1,4 @@
 # Backtesting module
-from .backtester import BacktestingEngine
+from src.backtester import BacktestingEngine
 
 __all__ = ['BacktestingEngine']

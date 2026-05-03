@@ -11,7 +11,7 @@ Version: 1.0.0
 
 import pandas as pd
 from datetime import datetime
-from ..utils.logger import logger
+from src.utils.logger import logger
 
 class LiteSignalEngine:
     """Ultra-fast, minimal signal engine for Phase 1"""

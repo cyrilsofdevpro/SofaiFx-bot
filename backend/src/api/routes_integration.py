@@ -24,7 +24,7 @@ def register_feature_blueprints(app):
         app: Flask application instance
     """
     try:
-        from .routes import (
+        from src.routes import (
             backtesting_bp,
             dashboard_bp,
             optimization_bp,

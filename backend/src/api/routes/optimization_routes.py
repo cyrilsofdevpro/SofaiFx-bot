@@ -4,7 +4,7 @@ Endpoints for managing signal weights and auto-optimization
 """
 from flask import Blueprint, request, jsonify
 import logging
-from ...optimization.auto_optimizer import AutoOptimizationEngine
+from src.optimization.auto_optimizer import AutoOptimizationEngine
 
 logger = logging.getLogger(__name__)
 optimization_bp = Blueprint('optimization', __name__, url_prefix='/api/optimization')

@@ -13,7 +13,7 @@ import json
 from datetime import datetime
 from typing import Dict, List
 import numpy as np
-from ..utils.logger import logger
+from src.utils.logger import logger
 
 class AutoOptimizationEngine:
     """Automatically optimizes signal weights based on performance"""

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from datetime import datetime
-from ..utils.logger import logger
+from src.utils.logger import logger
 
 class Signal(Enum):
     BUY = "BUY"

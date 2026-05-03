@@ -1,8 +1,8 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from ..config import config
-from ..utils.logger import logger
+from src.config import config
+from src.utils.logger import logger
 
 class EmailNotifier:
     """Send trading signals via Email"""

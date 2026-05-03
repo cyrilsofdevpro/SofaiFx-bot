@@ -9,11 +9,11 @@ Author: SofAi FX Bot
 Version: 1.0.0
 """
 
-from .lite_engine import LiteSignalEngine
-from .signal_generator import SignalGenerator
-from .phase4_ai_layer import Phase4AILayer
-from ..utils.logger import logger
-from ..config import config
+from src.lite_engine import LiteSignalEngine
+from src.signal_generator import SignalGenerator
+from src.phase4_ai_layer import Phase4AILayer
+from src.utils.logger import logger
+from src.config import config
 
 class PhaseRouter:
     """

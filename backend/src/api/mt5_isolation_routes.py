@@ -11,12 +11,12 @@ All endpoints enforce strict user isolation:
 
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime
-from ..models import db, User, Signal, Trade, ExecutionLog
-from ..services.user_context import UserContext, get_user_context, log_with_user
-from ..services.mt5_isolation import MT5UserIsolation
-from ..services.credential_manager import CredentialEncryptor, MT5CredentialManager
-from ..config import config
-from ..utils.logger import logger
+from src.models import db, User, Signal, Trade, ExecutionLog
+from src.services.user_context import UserContext, get_user_context, log_with_user
+from src.services.mt5_isolation import MT5UserIsolation
+from src.services.credential_manager import CredentialEncryptor, MT5CredentialManager
+from src.config import config
+from src.utils.logger import logger
 
 # Create blueprint
 mt5_isolation_bp = Blueprint('mt5_isolation', __name__, url_prefix='/api/mt5')
@@ -288,7 +288,7 @@ def get_signal_isolated():
         log_with_user('info', f'Generating signal for {symbol}', user_id)
         
         # Fetch market data
-        from ..data.twelvedata import TwelveDataClient
+        from src.data.twelvedata import TwelveDataClient
         td = TwelveDataClient()
         
         if len(symbol) == 6:
@@ -307,7 +307,7 @@ def get_signal_isolated():
             }), 400
         
         # Generate signal
-        from ..signals.phase4_ai_layer import Phase4AILayer
+        from src.signals.phase4_ai_layer import Phase4AILayer
         ai_layer = Phase4AILayer()
         signal_result = ai_layer.get_signal(df, symbol)
         
@@ -412,8 +412,8 @@ def analyze_symbol():
         log_with_user('info', f'Analyzing symbol: {symbol}', user_id)
         
         # Import signal generator here to avoid circular imports
-        from ..signals.signal_generator import SignalGenerator
-        from ..data.alpha_vantage import alpha_vantage
+        from src.signals.signal_generator import SignalGenerator
+        from src.data.alpha_vantage import alpha_vantage
         
         # Get market data
         try:
@@ -458,7 +458,7 @@ def analyze_symbol():
             # Send notification if requested
             if notify:
                 try:
-                    from ..notifications.telegram_notifier import TelegramNotifier
+                    from src.notifications.telegram_notifier import TelegramNotifier
                     notifier = TelegramNotifier()
                     notifier.send_signal_notification(user_id, result)
                 except Exception as e:
@@ -509,8 +509,8 @@ def analyze_all_symbols():
         successful = 0
         
         # Import here to avoid circular imports
-        from ..signals.signal_generator import SignalGenerator
-        from ..data.alpha_vantage import alpha_vantage
+        from src.signals.signal_generator import SignalGenerator
+        from src.data.alpha_vantage import alpha_vantage
         
         generator = SignalGenerator()
         
@@ -569,7 +569,7 @@ def analyze_all_symbols():
                     # Send notification if requested
                     if notify:
                         try:
-                            from ..notifications.telegram_notifier import TelegramNotifier
+                            from src.notifications.telegram_notifier import TelegramNotifier
                             notifier = TelegramNotifier()
                             notifier.send_signal_notification(user_id, result)
                         except Exception as e:

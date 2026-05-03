@@ -15,7 +15,7 @@ import threading
 from datetime import datetime
 from typing import Dict, Optional, List
 from enum import Enum
-from ..utils.logger import logger
+from src.utils.logger import logger
 
 class ExecutionStatus(Enum):
     """Trade execution status"""

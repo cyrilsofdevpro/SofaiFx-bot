@@ -4,7 +4,7 @@ Endpoints for managing trade execution with fault tolerance
 """
 from flask import Blueprint, request, jsonify
 import logging
-from ...execution.reliability import ExecutionReliabilityEngine
+from src.execution.reliability import ExecutionReliabilityEngine
 
 logger = logging.getLogger(__name__)
 execution_bp = Blueprint('execution', __name__, url_prefix='/api/execution')

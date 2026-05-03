@@ -11,8 +11,8 @@ Version: 2.0.0
 import hashlib
 import time
 import os
-from ..utils.logger import logger
-from ..config import config
+from src.utils.logger import logger
+from src.config import config
 
 class HuggingFaceService:
     """Hugging Face API integration for market sentiment analysis"""

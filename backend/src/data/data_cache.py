@@ -2,7 +2,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
-from ..utils.logger import logger
+from src.utils.logger import logger
 
 class DataCache:
     """Simple file-based cache for forex data to avoid API rate limits"""

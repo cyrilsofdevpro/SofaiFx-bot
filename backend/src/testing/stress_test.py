@@ -16,7 +16,7 @@ import random
 from datetime import datetime
 from typing import Dict, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from ..utils.logger import logger
+from src.utils.logger import logger
 
 class StressTestEngine:
     """Stress test the trading system"""

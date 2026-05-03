@@ -9,8 +9,8 @@ Version: 1.0.0
 
 from flask import Blueprint, jsonify
 from functools import wraps
-from ..models import User, Trade, Signal
-from ..services.pnl_tracker import PnLTracker
+from src.models import User, Trade, Signal
+from src.services.pnl_tracker import PnLTracker
 
 # Create blueprint
 stats_bp = Blueprint('stats', __name__, url_prefix='/api/stats')

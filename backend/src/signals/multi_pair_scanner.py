@@ -15,8 +15,8 @@ Version: 1.0.0
 import pandas as pd
 import numpy as np
 from datetime import datetime, time
-from ..utils.logger import logger
-from ..config import config
+from src.utils.logger import logger
+from src.config import config
 import requests
 import warnings
 warnings.filterwarnings('ignore')
@@ -125,7 +125,7 @@ class MultiPairScanner:
     def _get_pair_data(self, symbol):
         """Fetch OHLC data for a symbol"""
         try:
-            from ..data.twelvedata import TwelveDataClient
+            from src.data.twelvedata import TwelveDataClient
             
             td = TwelveDataClient()
             

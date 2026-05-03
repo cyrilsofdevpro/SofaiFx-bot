@@ -1,7 +1,7 @@
 import pandas as pd
-from .base_strategy import BaseStrategy, TradeSignal, Signal
-from ..config import config
-from ..utils.logger import logger
+from src.base_strategy import BaseStrategy, TradeSignal, Signal
+from src.config import config
+from src.utils.logger import logger
 
 class RSIStrategy(BaseStrategy):
     """

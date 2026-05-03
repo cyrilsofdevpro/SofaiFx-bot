@@ -3,7 +3,7 @@ Pair recommendations engine - analyzes signal history and recommends pairs
 """
 
 from datetime import datetime, timedelta
-from ..models import Signal
+from src.models import Signal
 import json
 
 

@@ -1,9 +1,9 @@
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
-from ..config import config
-from ..utils.logger import logger
-from .data_cache import data_cache
+from src.config import config
+from src.utils.logger import logger
+from src.data_cache import data_cache
 
 # Custom exceptions
 class APIRateLimitError(Exception):

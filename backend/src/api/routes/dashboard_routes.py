@@ -5,7 +5,7 @@ Endpoints for performance analytics and metrics visualization
 from flask import Blueprint, request, jsonify
 import logging
 from datetime import datetime, timedelta
-from ...analytics.dashboard import PerformanceDashboard
+from src.analytics.dashboard import PerformanceDashboard
 
 logger = logging.getLogger(__name__)
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
@@ -90,7 +90,7 @@ def _get_backtest_results(pair: str, start_date: datetime, end_date: datetime):
     Get backtest results - from database or compute on-the-fly
     TODO: Replace with actual database query
     """
-    from ...backtesting.backtester import BacktestingEngine
+    from src.backtesting.backtester import BacktestingEngine
     
     # Define pairs to analyze
     pairs_to_analyze = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD']

@@ -8,9 +8,9 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 from sqlalchemy import func
-from ..models import User, Signal, db
-from ..utils.logger import logger
-from ..config import config
+from src.models import User, Signal, db
+from src.utils.logger import logger
+from src.config import config
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -389,7 +389,7 @@ def test_notification():
         if channel in ['telegram', 'all']:
             # Import and send Telegram notification
             try:
-                from ..notifications.telegram_notifier import telegram_notifier
+                from src.notifications.telegram_notifier import telegram_notifier
                 telegram_notifier.send_signal_alert(
                     symbol='TEST',
                     signal_type='TEST',
@@ -403,7 +403,7 @@ def test_notification():
         if channel in ['email', 'all']:
             # Import and send Email notification
             try:
-                from ..notifications.email_notifier import email_notifier
+                from src.notifications.email_notifier import email_notifier
                 admin_user = User.query.filter_by(is_admin=True).first()
                 if admin_user:
                     email_notifier.send_signal_email(
@@ -446,7 +446,7 @@ def broadcast_message():
         for user in users:
             try:
                 # Send email to each user
-                from ..notifications.email_notifier import email_notifier
+                from src.notifications.email_notifier import email_notifier
                 email_notifier.send_signal_email(
                     to_email=user.email,
                     symbol='BROADCAST',
