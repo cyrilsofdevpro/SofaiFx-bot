@@ -299,18 +299,19 @@ const AuthSystem = {
     
     /**
      * Set authentication (internal use)
-     * Stores in both sessionStorage (primary) and localStorage (fallback for Edge/privacy browsers)
+     * Stores in sessionStorage for tab isolation, falling back to localStorage only if needed.
      */
     setAuth(token, user) {
-        // Primary: sessionStorage for tab isolation
-        sessionStorage.setItem('access_token', token);
-        sessionStorage.setItem('auth_user', JSON.stringify(user));
-        
-        // Fallback: localStorage for browsers with limited sessionStorage (Edge, Safari, etc)
-        localStorage.setItem('access_token', token);
-        localStorage.setItem('auth_user', JSON.stringify(user));
-        
-        console.log(`💾 Auth saved to sessionStorage + localStorage (Edge/Chrome compatibility)`);
+        try {
+            sessionStorage.setItem('access_token', token);
+            sessionStorage.setItem('auth_user', JSON.stringify(user));
+            console.log('💾 Auth saved to sessionStorage');
+        } catch (error) {
+            console.warn('⚠️ sessionStorage unavailable, falling back to localStorage:', error.message);
+            localStorage.setItem('access_token', token);
+            localStorage.setItem('auth_user', JSON.stringify(user));
+            console.log('💾 Auth saved to localStorage fallback');
+        }
         console.log(`👤 User: ${user.name} (${user.email})`);
     },
     

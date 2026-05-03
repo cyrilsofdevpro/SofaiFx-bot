@@ -46,29 +46,28 @@ const JWTInterceptor = {
      */
     setToken(token, refreshToken = null, expiresIn = 3600) {
         try {
-            // Try localStorage (preferred)
-            localStorage.setItem(this.config.tokenKey, token);
-            if (refreshToken) {
-                localStorage.setItem(this.config.refreshTokenKey, refreshToken);
-            }
-            
-            // Calculate expiry time (current time + expiresIn seconds)
-            const expiryTime = new Date().getTime() + (expiresIn * 1000);
-            localStorage.setItem(this.config.tokenExpiryKey, expiryTime.toString());
-            
-            console.log('✅ Token stored in localStorage');
-        } catch (e) {
-            // Fallback to sessionStorage (for mobile or private browsing)
-            console.warn('⚠️ localStorage failed, using sessionStorage:', e.message);
+            // Prefer sessionStorage for tab-isolated auth sessions
             sessionStorage.setItem(this.config.tokenKey, token);
             if (refreshToken) {
                 sessionStorage.setItem(this.config.refreshTokenKey, refreshToken);
             }
             
+            // Calculate expiry time (current time + expiresIn seconds)
             const expiryTime = new Date().getTime() + (expiresIn * 1000);
             sessionStorage.setItem(this.config.tokenExpiryKey, expiryTime.toString());
             
-            console.log('✅ Token stored in sessionStorage (fallback)');
+            console.log('✅ Token stored in sessionStorage');
+        } catch (e) {
+            // Fallback to localStorage only if sessionStorage is unavailable
+            console.warn('⚠️ sessionStorage failed, using localStorage:', e.message);
+            localStorage.setItem(this.config.tokenKey, token);
+            if (refreshToken) {
+                localStorage.setItem(this.config.refreshTokenKey, refreshToken);
+            }
+            const expiryTime = new Date().getTime() + (expiresIn * 1000);
+            localStorage.setItem(this.config.tokenExpiryKey, expiryTime.toString());
+            
+            console.log('✅ Token stored in localStorage (fallback)');
         }
     },
 
@@ -76,8 +75,8 @@ const JWTInterceptor = {
      * Get token from storage with fallback
      */
     getToken() {
-        return localStorage.getItem(this.config.tokenKey) || 
-               sessionStorage.getItem(this.config.tokenKey) || 
+        return sessionStorage.getItem(this.config.tokenKey) || 
+               localStorage.getItem(this.config.tokenKey) || 
                null;
     },
 
@@ -85,8 +84,8 @@ const JWTInterceptor = {
      * Get refresh token from storage
      */
     getRefreshToken() {
-        return localStorage.getItem(this.config.refreshTokenKey) || 
-               sessionStorage.getItem(this.config.refreshTokenKey) || 
+        return sessionStorage.getItem(this.config.refreshTokenKey) || 
+               localStorage.getItem(this.config.refreshTokenKey) || 
                null;
     },
 
@@ -94,8 +93,8 @@ const JWTInterceptor = {
      * Check if token is expired
      */
     isTokenExpired() {
-        const expiryStr = localStorage.getItem(this.config.tokenExpiryKey) || 
-                          sessionStorage.getItem(this.config.tokenExpiryKey);
+        const expiryStr = sessionStorage.getItem(this.config.tokenExpiryKey) || 
+                          localStorage.getItem(this.config.tokenExpiryKey);
         
         if (!expiryStr) return false;
         
