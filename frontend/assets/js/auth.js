@@ -111,6 +111,7 @@ const AuthSystem = {
             
             // Update UI without reloading the page
             await this.updateUserInfo();
+            this.updateAuthButtons();
             if (typeof checkAdminStatus !== 'undefined') {
                 checkAdminStatus();
             }
@@ -175,6 +176,7 @@ const AuthSystem = {
             
             // Update UI without reloading
             await this.updateUserInfo();
+            this.updateAuthButtons();
             if (typeof checkAdminStatus !== 'undefined') {
                 checkAdminStatus();
             }
@@ -327,6 +329,53 @@ const AuthSystem = {
         if (userNameMobile) userNameMobile.textContent = '';
         
         console.log('🗑️ This tab\'s session cleared (other tabs unaffected)');
+        this.updateAuthButtons();
+    },
+
+    /**
+     * Update auth button visibility based on login state
+     */
+    updateAuthButtons() {
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const switchBtn = document.getElementById('switch-btn');
+        const loginBtnMobile = document.getElementById('login-btn-mobile');
+        const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+        const switchBtnMobile = document.getElementById('switch-btn-mobile');
+        const userInfo = document.getElementById('user-info');
+
+        const isLoggedIn = this.isAuthenticated();
+
+        if (loginBtn) {
+            loginBtn.classList.toggle('hidden', isLoggedIn);
+        }
+        if (loginBtnMobile) {
+            loginBtnMobile.classList.toggle('hidden', isLoggedIn);
+        }
+        if (logoutBtn) {
+            logoutBtn.classList.toggle('hidden', !isLoggedIn);
+        }
+        if (logoutBtnMobile) {
+            logoutBtnMobile.classList.toggle('hidden', !isLoggedIn);
+        }
+        if (switchBtn) {
+            switchBtn.classList.toggle('hidden', !isLoggedIn);
+        }
+        if (switchBtnMobile) {
+            switchBtnMobile.classList.toggle('hidden', !isLoggedIn);
+        }
+        const adminBtn = document.getElementById('admin-btn');
+        const adminBtnMobile = document.getElementById('admin-btn-mobile');
+        if (adminBtn) {
+            adminBtn.classList.toggle('hidden', !isLoggedIn);
+        }
+        if (adminBtnMobile) {
+            adminBtnMobile.classList.toggle('hidden', !isLoggedIn);
+        }
+
+        if (userInfo && !isLoggedIn) {
+            userInfo.classList.add('hidden');
+        }
     },
 
     /**
@@ -547,6 +596,9 @@ document.addEventListener('DOMContentLoaded', () => {
     (async () => {
         setupTabSwitching();
         setupFormSubmissions();
+        if (typeof AuthSystem !== 'undefined' && AuthSystem.updateAuthButtons) {
+            AuthSystem.updateAuthButtons();
+        }
         await checkAuthStatus();
     })();
 });

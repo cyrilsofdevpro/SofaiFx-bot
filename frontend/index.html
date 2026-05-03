@@ -115,16 +115,19 @@
                         <span id="user-name"></span>
                         <span id="token-usage" class="ml-2 px-2 py-0.5 bg-slate-700 rounded text-xs"></span>
                     </span>
+                    <button id="login-btn" onclick="AuthSystem.showAuthModal()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-green-600 hover:bg-green-500 rounded transition" title="Login">
+                        <i class="fas fa-sign-in-alt"></i> <span class="hidden sm:inline">Login</span>
+                    </button>
                     <button onclick="location.reload()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-slate-700 hover:bg-slate-600 rounded transition" title="Refresh">
                         <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Refresh</span>
                     </button>
                     <button id="admin-btn" onclick="goToAdmin()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-purple-600 hover:bg-purple-700 rounded transition hidden" title="Admin Dashboard">
                         <i class="fas fa-crown"></i> <span class="hidden sm:inline">Admin</span>
                     </button>
-                    <button onclick="AuthSystem.switchAccount()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-yellow-600 hover:bg-yellow-500 rounded transition" title="Switch account">
+                    <button id="switch-btn" onclick="AuthSystem.switchAccount()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-yellow-600 hover:bg-yellow-500 rounded transition hidden" title="Switch account">
                         <i class="fas fa-user-switch"></i> <span class="hidden sm:inline">Switch</span>
                     </button>
-                    <button onclick="AuthSystem.logout()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-red-600 hover:bg-red-500 rounded transition" title="Logout">
+                    <button id="logout-btn" onclick="AuthSystem.logout()" class="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-red-600 hover:bg-red-500 rounded transition hidden" title="Logout">
                         <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Logout</span>
                     </button>
                 </div>
@@ -141,10 +144,16 @@
                 <button id="admin-btn-mobile" onclick="goToAdmin()" class="w-full px-3 py-2 text-left text-sm bg-purple-600 hover:bg-purple-700 rounded transition hidden">
                     <i class="fas fa-crown mr-2"></i>Admin
                 </button>
-                <button onclick="AuthSystem.switchAccount()" class="w-full px-3 py-2 text-left text-sm bg-yellow-600 hover:bg-yellow-500 rounded transition">
+                <button id="login-btn-mobile" onclick="AuthSystem.showAuthModal()" class="w-full px-3 py-2 text-left text-sm bg-green-600 hover:bg-green-500 rounded transition">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+                <button id="admin-btn-mobile" onclick="goToAdmin()" class="w-full px-3 py-2 text-left text-sm bg-purple-600 hover:bg-purple-700 rounded transition hidden">
+                    <i class="fas fa-crown mr-2"></i>Admin
+                </button>
+                <button id="switch-btn-mobile" onclick="AuthSystem.switchAccount()" class="w-full px-3 py-2 text-left text-sm bg-yellow-600 hover:bg-yellow-500 rounded transition hidden">
                     <i class="fas fa-user-switch mr-2"></i>Switch Account
                 </button>
-                <button onclick="AuthSystem.logout()" class="w-full px-3 py-2 text-left text-sm bg-red-600 hover:bg-red-500 rounded transition">
+                <button id="logout-btn-mobile" onclick="AuthSystem.logout()" class="w-full px-3 py-2 text-left text-sm bg-red-600 hover:bg-red-500 rounded transition hidden">
                     <i class="fas fa-sign-out-alt mr-2"></i>Logout
                 </button>
             </div>
