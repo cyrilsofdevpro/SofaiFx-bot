@@ -127,10 +127,11 @@ class APIKeyManager {
             }
 
             console.log('📡 Fetching user info from API...');
-            console.log('🌐 URL: http://localhost:5000/api/user');
+            const apiUrl = APIConfig.buildUrl('/api/user');
+            console.log('🌐 URL:', apiUrl);
             console.log('🔐 Token:', token.substring(0, 20) + '...');
             
-            const response = await fetch('http://localhost:5000/api/user', {
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
